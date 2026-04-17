@@ -1,0 +1,443 @@
+# =============================================================================
+# CCPO — SPARQL Competency Questions
+# Carbon Credit Provenance Ontology (CCPO)
+#
+# Author:      Dr. Nada Alghanmi
+# Institution: University of Technology Sydney (UTS)
+# Supervisor:  Dr. Farookh Hussain
+# Year:        2026
+#
+# Purpose:
+#   These SPARQL queries validate that the CCPO can answer the provenance
+#   questions that auditors, registries, and regulators actually need.
+#   Each query maps directly to a traceability objective or research question
+#   from Chapter 5 of the thesis.
+#
+# How to run in WebProtege:
+#   1. Open your CCPO_CCPT project in WebProtege
+#   2. Click the "SPARQL" tab (top menu bar)
+#   3. Copy ONE query at a time into the query box
+#   4. Click "Execute"
+#   5. Screenshot the results — use as evidence in your thesis
+#
+# How to run in Protege Desktop:
+#   1. Open ccpo.ttl in Protege
+#   2. Go to Window > Views > Query views > SPARQL Query
+#   3. Paste the query and click Execute
+#
+# =============================================================================
+
+PREFIX cc:    <https://w3id.org/ccpo#>
+PREFIX prov:  <http://www.w3.org/ns/prov#>
+PREFIX ind:   <https://w3id.org/ccpo/individuals#>
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:   <http://www.w3.org/2002/07/owl#>
+PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+
+# =============================================================================
+# TRACEABILITY OBJECTIVE 1 - BACKWARD TRACE
+# Chapter 5, Section 5.6.2
+# GreenCanopy Audit Query (Chapter 1, Section 1.7, Failure 4):
+# "Trace the credits purchased under batch GC-2022-B03 from issuance
+#  through to retirement and confirm that the underlying MRV evidence
+#  supports the claimed emission reductions."
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# CQ1 - Full backward provenance trace
+# Question: "Given a carbon credit, trace its complete provenance chain
+#            back to the originating project and all MRV evidence."
+# Thesis: Chapter 5, Section 5.6.2 - Backward Trace
+# Expected: Shows credit > project > issuance > registry > evidence > anchor
+# -----------------------------------------------------------------------------
+SELECT ?credit ?creditLabel ?project ?projectLabel
+       ?issuanceActivity ?registry ?evidence ?evidenceType ?anchor
+WHERE {
+    ?credit      a cc:CarbonCredit ;
+                 cc:isCreditOf        ?project ;
+                 cc:wasIssuedBy       ?registry ;
+                 prov:wasGeneratedBy  ?issuanceActivity .
+
+    ?issuanceActivity cc:hasEvidence  ?evidence .
+    ?evidence    a  ?evidenceType .
+
+    OPTIONAL { ?credit   rdfs:label ?creditLabel }
+    OPTIONAL { ?project  rdfs:label ?projectLabel }
+    OPTIONAL { ?evidence cc:hasOnChainAnchor ?anchor }
+}
+ORDER BY ?project ?credit
+
+
+# -----------------------------------------------------------------------------
+# CQ2 - Backward trace with MRV hash verification
+# Question: "For a specific credit, what on-chain cryptographic anchors
+#            exist to prove the MRV evidence has not been tampered with?"
+# Thesis: Chapter 5, Section 5.6.2 - OnChainAnchor linkage
+# Expected: Evidence artefact name + its SHA-256 hash on Ethereum
+# -----------------------------------------------------------------------------
+SELECT ?credit ?evidence ?evidenceType ?anchorHash ?transactionID
+WHERE {
+    ?credit      a cc:CarbonCredit ;
+                 prov:wasGeneratedBy ?issuance .
+
+    ?issuance    cc:hasEvidence   ?evidence .
+    ?evidence    a                ?evidenceType ;
+                 cc:hasOnChainAnchor ?anchor .
+
+    ?anchor      cc:contentHash   ?anchorHash .
+
+    OPTIONAL { ?issuance cc:transactionID ?transactionID }
+    OPTIONAL { ?credit   rdfs:label       ?creditLabel }
+}
+
+
+# =============================================================================
+# TRACEABILITY OBJECTIVE 2 - FORWARD TRACE
+# Chapter 5, Section 5.6.3
+# Question: "From a project, retrieve all credits generated and confirm
+#            no credit has been double-counted."
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# CQ3 - Full forward trace from project to all credits
+# Question: "What credits has a given project generated, and what is
+#            the current status of each?"
+# Thesis: Chapter 5, Section 5.6.3 - Forward Trace
+# Expected: Each credit with vintage year, quantity, and lifecycle status
+# -----------------------------------------------------------------------------
+SELECT ?project ?projectID ?credit ?creditID
+       ?vintageYear ?quantity ?status ?issuanceActivity ?registry
+WHERE {
+    ?project     a cc:Project .
+    ?credit      a cc:CarbonCredit ;
+                 cc:isCreditOf       ?project ;
+                 prov:wasGeneratedBy ?issuanceActivity ;
+                 cc:wasIssuedBy      ?registry .
+
+    OPTIONAL { ?project cc:projectID    ?projectID }
+    OPTIONAL { ?credit  cc:creditID     ?creditID }
+    OPTIONAL { ?credit  cc:vintageYear  ?vintageYear }
+    OPTIONAL { ?credit  cc:quantity     ?quantity }
+    OPTIONAL { ?credit  cc:creditStatus ?status }
+}
+ORDER BY ?project ?vintageYear
+
+
+# -----------------------------------------------------------------------------
+# CQ4 - Project lifecycle summary
+# Question: "How many credits has each project issued, transferred,
+#            and retired in total?"
+# Thesis: Chapter 5, Section 5.3.3 - Metadata Attributes
+# Expected: Per-project totals for issued, retired, remaining credits
+# -----------------------------------------------------------------------------
+SELECT ?project ?projectID ?projectType
+       ?totalIssued ?totalRetired ?totalRemaining
+WHERE {
+    ?project a cc:Project .
+
+    OPTIONAL { ?project cc:projectID             ?projectID }
+    OPTIONAL { ?project cc:projectType           ?projectType }
+    OPTIONAL { ?project cc:totalCreditsIssued    ?totalIssued }
+    OPTIONAL { ?project cc:totalCreditsRetired   ?totalRetired }
+    OPTIONAL { ?project cc:totalCreditsRemaining ?totalRemaining }
+}
+ORDER BY ?project
+
+
+# =============================================================================
+# TRACEABILITY OBJECTIVE 3 - INTEGRITY CHECKS
+# Chapter 5, Section 5.6.4
+# These queries detect provenance violations automatically using SPARQL.
+# The OWL 2 reasoner (HermiT/Pellet) also catches these via restrictions.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# CQ5 - Integrity Check A: Credits without valid issuance
+# Question: "Are there any carbon credits that exist without a valid,
+#            evidence-backed issuance activity?"
+# Thesis: Chapter 5, Section 5.6.4 - Integrity Check A
+# Expected: VCS1176 individual appears (rejected issuance - no evidence)
+#           VCS1225 does NOT appear (valid issuance exists)
+# -----------------------------------------------------------------------------
+SELECT ?credit ?creditID ?creditLabel
+WHERE {
+    ?credit a cc:CarbonCredit .
+
+    FILTER NOT EXISTS {
+        ?credit prov:wasGeneratedBy ?issuance .
+        ?issuance a cc:IssuanceActivity .
+    }
+
+    OPTIONAL { ?credit cc:creditID   ?creditID }
+    OPTIONAL { ?credit rdfs:label    ?creditLabel }
+}
+
+
+# -----------------------------------------------------------------------------
+# CQ6 - Integrity Check A (extended): Issuances missing MRV evidence
+# Question: "Which issuance activities have no linked verification
+#            statement or monitoring report?"
+# Thesis: Chapter 5, Section 5.6.4 - Integrity Check A
+# Expected: AttemptedIssuance_VCS1176 appears (no evidence linked)
+# -----------------------------------------------------------------------------
+SELECT ?issuance ?issuanceLabel ?timestamp
+WHERE {
+    ?issuance a cc:IssuanceActivity .
+
+    FILTER NOT EXISTS {
+        ?issuance cc:hasEvidence ?evidence .
+        ?evidence a cc:MRVEvidence .
+    }
+
+    OPTIONAL { ?issuance rdfs:label    ?issuanceLabel }
+    OPTIONAL { ?issuance cc:timestamp  ?timestamp }
+}
+
+
+# -----------------------------------------------------------------------------
+# CQ7 - Integrity Check B: Transfer after retirement violation
+# Question: "Are there any credits that were transferred AFTER retirement?"
+#           This is the double-retirement / double-counting detection.
+# Thesis: Chapter 5, Section 5.6.4 - Integrity Check B
+# Expected: InvalidTransfer_VCS1225_Airline appears because its timestamp
+#           is later than the RetirementActivity timestamp on same credit
+# -----------------------------------------------------------------------------
+SELECT ?credit ?creditLabel ?retirementTime ?transferTime ?transferAgent
+WHERE {
+    ?credit      a cc:CarbonCredit .
+
+    ?retirement  a cc:RetirementActivity ;
+                 prov:used        ?credit ;
+                 cc:timestamp     ?retirementTime .
+
+    ?transfer    a cc:TransferActivity ;
+                 prov:used        ?credit ;
+                 cc:timestamp     ?transferTime .
+
+    FILTER (?transferTime > ?retirementTime)
+
+    OPTIONAL { ?credit   rdfs:label             ?creditLabel }
+    OPTIONAL { ?transfer prov:wasAssociatedWith  ?transferAgent }
+}
+
+
+# -----------------------------------------------------------------------------
+# CQ8 - Double counting: credits with more than one issuance
+# Question: "Are there any credits that have been issued more than once?"
+#           Each credit must have exactly ONE IssuanceActivity parent.
+# Thesis: Chapter 5, Section 5.5 - Integrity Checks
+# Expected: Empty result means no double issuances found (good)
+# -----------------------------------------------------------------------------
+SELECT ?credit ?creditLabel (COUNT(?issuance) AS ?issuanceCount)
+WHERE {
+    ?credit   a cc:CarbonCredit ;
+              prov:wasGeneratedBy ?issuance .
+    ?issuance a cc:IssuanceActivity .
+
+    OPTIONAL { ?credit rdfs:label ?creditLabel }
+}
+GROUP BY ?credit ?creditLabel
+HAVING (COUNT(?issuance) > 1)
+
+
+# =============================================================================
+# REGISTRY AND ACTOR QUERIES
+# Chapter 5, Section 5.4.3 - W3C Questions: Who are the actors?
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# CQ9 - Cross-registry verification
+# Question: "Who issued and who verified each carbon credit?"
+# Thesis: Chapter 5, Section 5.4.3 - Actors involved
+# Expected: Credit ID, issuing registry, and verifier for each credit
+# -----------------------------------------------------------------------------
+SELECT ?credit ?creditID ?registry ?registryLabel ?verifier ?verifierLabel
+WHERE {
+    ?credit a cc:CarbonCredit .
+
+    OPTIONAL { ?credit   cc:creditID        ?creditID }
+    OPTIONAL { ?credit   cc:wasIssuedBy     ?registry .
+               ?registry rdfs:label         ?registryLabel }
+    OPTIONAL { ?credit   cc:wasValidatedBy  ?verifier .
+               ?verifier rdfs:label         ?verifierLabel }
+}
+ORDER BY ?registry
+
+
+# -----------------------------------------------------------------------------
+# CQ10 - Credits by project methodology (REDD+)
+# Question: "Which credits come from REDD+ avoided deforestation projects?"
+# Thesis: Chapter 5, Section 5.3.2 - Classification by Methodology
+# Expected: VCS1225 (Kenya Agricultural Carbon Project = REDD+)
+# -----------------------------------------------------------------------------
+SELECT ?credit ?creditID ?project ?projectType ?methodology
+WHERE {
+    ?credit   a cc:CarbonCredit ;
+              cc:isCreditOf ?project .
+    ?project  cc:projectType ?projectType .
+
+    FILTER (CONTAINS(LCASE(STR(?projectType)), "redd"))
+
+    OPTIONAL { ?credit  cc:creditID       ?creditID }
+    OPTIONAL { ?project cc:hasMethodology ?methodology }
+}
+
+
+# -----------------------------------------------------------------------------
+# CQ11 - Credits by compliance type (compliance vs voluntary markets)
+# Question: "Which credits are from voluntary markets and which from
+#            compliance markets?"
+# Thesis: Chapter 5, Section 5.3.1 - Compliance vs Voluntary
+# Expected: Grouped list showing market type for each credit
+# -----------------------------------------------------------------------------
+SELECT ?credit ?creditID ?marketType
+WHERE {
+    ?credit a cc:CarbonCredit .
+    OPTIONAL { ?credit cc:creditID ?creditID }
+
+    {
+        ?credit a <https://w3id.org/ccpo/taxonomy#ComplianceMarketCredit> .
+        BIND("Compliance" AS ?marketType)
+    }
+    UNION
+    {
+        ?credit a <https://w3id.org/ccpo/taxonomy#VoluntaryMarketCredit> .
+        BIND("Voluntary" AS ?marketType)
+    }
+}
+
+
+# =============================================================================
+# LIFECYCLE EVENT QUERIES
+# Chapter 5, Section 5.4.3 - What events must be logged?
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# CQ12 - Full lifecycle event timeline for a credit
+# Question: "What is the complete sequence of lifecycle events for a
+#            credit, in chronological order?"
+# Thesis: Chapter 5, Section 5.4.3 - Events to log
+# Expected: All events (issuance, transfer, retirement) with timestamps
+# -----------------------------------------------------------------------------
+SELECT ?credit ?eventType ?eventLabel ?timestamp ?agent
+WHERE {
+    ?credit a cc:CarbonCredit .
+    ?event  prov:used    ?credit ;
+            a            ?eventType ;
+            cc:timestamp ?timestamp .
+
+    FILTER (?eventType IN (
+        cc:IssuanceActivity,
+        cc:TransferActivity,
+        cc:RetirementActivity,
+        cc:RevocationActivity
+    ))
+
+    OPTIONAL { ?event rdfs:label             ?eventLabel }
+    OPTIONAL { ?event prov:wasAssociatedWith ?agent }
+}
+ORDER BY ?credit ?timestamp
+
+
+# -----------------------------------------------------------------------------
+# CQ13 - All retirement events
+# Question: "Which credits have been retired, by whom, and when?"
+# Thesis: Chapter 5, Section 5.4.3 - Retirement events
+# Expected: Credit, retiring agent, and timestamp
+# -----------------------------------------------------------------------------
+SELECT ?credit ?creditID ?retiredBy ?retiredByLabel ?timestamp
+WHERE {
+    ?credit     a cc:CarbonCredit .
+    ?retirement a cc:RetirementActivity ;
+                prov:used              ?credit ;
+                prov:wasAssociatedWith ?retiredBy .
+
+    OPTIONAL { ?credit    cc:creditID   ?creditID }
+    OPTIONAL { ?retiredBy rdfs:label    ?retiredByLabel }
+    OPTIONAL { ?retirement cc:timestamp ?timestamp }
+}
+ORDER BY ?timestamp
+
+
+# =============================================================================
+# METADATA QUERIES
+# Chapter 5, Section 5.3.3 - Metadata Attributes
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# CQ14 - CORSIA eligibility check
+# Question: "Which credits are eligible under the ICAO CORSIA framework?"
+# Thesis: Chapter 5, Section 5.3.3 - CORSIA Eligibility attribute
+# Expected: Credits where cc:corsiaEligible = true
+# -----------------------------------------------------------------------------
+SELECT ?credit ?creditID ?vintageYear ?registry
+WHERE {
+    ?credit a cc:CarbonCredit ;
+            cc:corsiaEligible true .
+
+    OPTIONAL { ?credit cc:creditID    ?creditID }
+    OPTIONAL { ?credit cc:vintageYear ?vintageYear }
+    OPTIONAL { ?credit cc:wasIssuedBy ?registry }
+}
+
+
+# -----------------------------------------------------------------------------
+# CQ15 - On-chain anchor completeness audit
+# Question: "For every MRV evidence artefact, is there an on-chain anchor?"
+# Thesis: Chapter 5, Section 5.4.4 - Hybrid Anchoring (Objective 2)
+# Expected: Each evidence with hash shown; missing hash = tamper risk
+# -----------------------------------------------------------------------------
+SELECT ?issuance ?evidence ?evidenceClass ?contentHash
+WHERE {
+    ?issuance  a cc:IssuanceActivity ;
+               cc:hasEvidence ?evidence .
+    ?evidence  a ?evidenceClass .
+
+    OPTIONAL {
+        ?evidence cc:hasOnChainAnchor ?anchor .
+        ?anchor   cc:contentHash      ?contentHash .
+    }
+}
+ORDER BY ?contentHash
+
+
+# =============================================================================
+# GREENCANOPY SCENARIO - COMBINED AUDIT QUERY
+# Chapter 1, Section 1.7 and Chapter 5, Section 5.6
+# This single query replaces the 3-week manual audit described in the thesis.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# CQ16 - Complete GreenCanopy audit query
+# Question: "In a single query, return the FULL provenance chain for a
+#            credit batch - project, issuance, evidence, anchors, registry,
+#            verifier, and timestamps."
+# Thesis: Chapter 5, Section 5.6 - CCPO applied to GreenCanopy audit
+# Expected: Complete chain in one results table (vs 3 weeks manually)
+# -----------------------------------------------------------------------------
+SELECT ?creditLabel ?projectLabel ?issuanceLabel
+       ?registryLabel ?verifierLabel
+       ?evidenceType ?contentHash ?timestamp
+WHERE {
+    ?credit      a cc:CarbonCredit ;
+                 cc:isCreditOf        ?project ;
+                 cc:wasIssuedBy       ?registry ;
+                 cc:wasValidatedBy    ?verifier ;
+                 prov:wasGeneratedBy  ?issuance .
+
+    ?issuance    cc:hasEvidence   ?evidence ;
+                 cc:timestamp     ?timestamp .
+    ?evidence    a                ?evidenceType .
+
+    OPTIONAL { ?evidence  cc:hasOnChainAnchor ?anchor .
+               ?anchor    cc:contentHash      ?contentHash }
+
+    OPTIONAL { ?credit   rdfs:label  ?creditLabel }
+    OPTIONAL { ?project  rdfs:label  ?projectLabel }
+    OPTIONAL { ?issuance rdfs:label  ?issuanceLabel }
+    OPTIONAL { ?registry rdfs:label  ?registryLabel }
+    OPTIONAL { ?verifier rdfs:label  ?verifierLabel }
+}
+ORDER BY ?timestamp
