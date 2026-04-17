@@ -1,0 +1,933 @@
+@prefix : <http://example.org/cc#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://example.org/cc> .
+
+<http://example.org/cc> rdf:type owl:Ontology ;
+                         rdfs:comment "Lightweight ontology for agricultural carbon credit projects based on PROV-O and used for provenance evaluation." ;
+                         rdfs:label "Carbon Credit Provenance Ontology (core for projects table)" .
+
+#################################################################
+#    Annotation properties
+#################################################################
+
+###  http://example.org/cc#agentName
+:agentName rdf:type owl:AnnotationProperty .
+
+
+###  http://example.org/cc#creditID
+:creditID rdf:type owl:AnnotationProperty .
+
+
+###  http://example.org/cc#hasProjectDeveloper
+:hasProjectDeveloper rdf:type owl:AnnotationProperty ;
+                     rdfs:label "cc:hasProjectDeve;oper"^^xsd:string .
+
+
+###  http://example.org/cc#hasProjectType
+:hasProjectType rdf:type owl:AnnotationProperty ;
+                rdfs:label "cc:hasProjectType"^^xsd:string .
+
+
+#################################################################
+#    Datatypes
+#################################################################
+
+###  http://www.w3.org/2001/XMLSchema#date
+xsd:date rdf:type rdfs:Datatype .
+
+
+###  http://www.w3.org/2001/XMLSchema#gYear
+xsd:gYear rdf:type rdfs:Datatype .
+
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://example.org/cc#generatedCredit
+:generatedCredit rdf:type owl:ObjectProperty ;
+                 rdfs:subPropertyOf <http://www.w3.org/ns/prov#generated> ;
+                 rdfs:domain :IssuanceActivity ;
+                 rdfs:range :CarbonCredit ;
+                 rdfs:label "cc:generated credit"^^xsd:string .
+
+
+###  http://example.org/cc#hasAssuranceLevel
+:hasAssuranceLevel rdf:type owl:ObjectProperty ;
+                   rdfs:domain <http://www.w3.org/ns/prov#Activity> ;
+                   rdfs:range :AssuranceLevel ;
+                   rdfs:comment "Links a provenance activity or evidence item to its assurance level category."@en ;
+                   rdfs:label "has assurance level"@en .
+
+
+###  http://example.org/cc#hasCountry
+:hasCountry rdf:type owl:ObjectProperty ;
+            rdfs:domain :Project ;
+            rdfs:range :Country .
+
+
+###  http://example.org/cc#hasCredit
+:hasCredit rdf:type owl:ObjectProperty ;
+           owl:inverseOf :isCreditOf ;
+           rdfs:domain :Project ;
+           rdfs:range :CarbonCredit ;
+           rdfs:label "cc:has credit"^^xsd:string .
+
+
+###  http://example.org/cc#hasCreditOwner
+:hasCreditOwner rdf:type owl:ObjectProperty ;
+                rdfs:domain :CarbonCredit ;
+                rdfs:range :CreditOwner ;
+                rdfs:comment "Links a carbon credit to its current credit owner or account holder."@en ;
+                rdfs:label "has credit owner"@en .
+
+
+###  http://example.org/cc#hasDeveloper
+:hasDeveloper rdf:type owl:ObjectProperty ;
+              rdfs:domain :Project ;
+              rdfs:range :ProjectDeveloper ;
+              rdfs:label "cc:has developer"^^xsd:string .
+
+
+###  http://example.org/cc#hasEventRole
+:hasEventRole rdf:type owl:ObjectProperty ;
+              rdfs:domain <http://www.w3.org/ns/prov#Activity> ;
+              rdfs:range :EventRole ;
+              rdfs:comment "Links an activity to its lifecycle role (creation, transformation, termination)."@en ;
+              rdfs:label "has lifecycle role"@en .
+
+
+###  http://example.org/cc#hasEvidence
+:hasEvidence rdf:type owl:ObjectProperty ;
+             rdfs:domain <http://www.w3.org/ns/prov#Activity> ;
+             rdfs:range :EvidenceType ;
+             rdfs:comment "Links a provenance activity to the type of evidence that supports it."@en ;
+             rdfs:label "has evidence"@en .
+
+
+###  http://example.org/cc#hasMarket
+:hasMarket rdf:type owl:ObjectProperty ;
+           rdfs:domain :CarbonCredit ;
+           rdfs:range :Market ;
+           rdfs:comment "Links a carbon credit to its market type (compliance or voluntary)."@en ;
+           rdfs:label "has market type"@en .
+
+
+###  http://example.org/cc#hasMechanism
+:hasMechanism rdf:type owl:ObjectProperty ;
+              rdfs:domain :CarbonCredit ;
+              rdfs:range :Mechanism ;
+              rdfs:comment "Links a carbon credit to its mitigation mechanism (avoidance or removal)."@en ;
+              rdfs:label "has mechanism"@en .
+
+
+###  http://example.org/cc#hasOperator
+:hasOperator rdf:type owl:ObjectProperty ;
+             rdfs:domain :Project ;
+             rdfs:range :ProjectOperator ;
+             rdfs:label "cc:has operator"^^xsd:string .
+
+
+###  http://example.org/cc#hasOwner
+:hasOwner rdf:type owl:ObjectProperty ;
+          rdfs:domain :Project ;
+          rdfs:range :ProjectOwner ;
+          rdfs:label "cc:has owner"^^xsd:string .
+
+
+###  http://example.org/cc#hasProject
+:hasProject rdf:type owl:ObjectProperty ;
+            owl:inverseOf :isProjectOf ;
+            rdfs:domain :CarbonCredit ;
+            rdfs:range :Project ;
+            rdfs:label "cc:has project"^^xsd:string .
+
+
+###  http://example.org/cc#hasProjectCategory
+:hasProjectCategory rdf:type owl:ObjectProperty ;
+                    rdfs:domain :Project ;
+                    rdfs:range :ProjectCategory ,
+                               :ProjectType ;
+                    rdfs:comment "Links a project to its high-level category such as ARR or land management."@en ;
+                    rdfs:label "cc:has project category"^^xsd:string ,
+                               "has project category"@en .
+
+
+###  http://example.org/cc#hasProjectStatus
+:hasProjectStatus rdf:type owl:ObjectProperty ;
+                  rdfs:domain :Project ;
+                  rdfs:range :ProjectStatus .
+
+
+###  http://example.org/cc#hasRegion
+:hasRegion rdf:type owl:ObjectProperty ;
+           rdfs:domain :Project ;
+           rdfs:range :Region .
+
+
+###  http://example.org/cc#hasRegistry
+:hasRegistry rdf:type owl:ObjectProperty ;
+             rdfs:domain :Project ;
+             rdfs:range :Registry .
+
+
+###  http://example.org/cc#hasState
+:hasState rdf:type owl:ObjectProperty ;
+          rdfs:domain :Project ;
+          rdfs:range :State ;
+          rdfs:label "cc:has state / province"^^xsd:string .
+
+
+###  http://example.org/cc#hasVerifier
+:hasVerifier rdf:type owl:ObjectProperty ;
+             rdfs:domain :Project ;
+             rdfs:range :Verifier ;
+             rdfs:label "cc:has verifier"^^xsd:string .
+
+
+###  http://example.org/cc#involvesCredit
+:involvesCredit rdf:type owl:ObjectProperty ;
+                rdfs:subPropertyOf <http://www.w3.org/ns/prov#used> ;
+                rdfs:domain :TransferActivity ;
+                rdfs:range :CarbonCredit ;
+                rdfs:label "cc:involves credit"^^xsd:string .
+
+
+###  http://example.org/cc#isCreditOf
+:isCreditOf rdf:type owl:ObjectProperty ;
+            rdfs:domain :CarbonCredit ;
+            rdfs:range :Project ;
+            rdfs:label "cc:is credit of"^^xsd:string .
+
+
+###  http://example.org/cc#isProjectOf
+:isProjectOf rdf:type owl:ObjectProperty ;
+             rdfs:domain :Project ;
+             rdfs:range :CarbonCredit ;
+             rdfs:label "cc:is project of"^^xsd:string .
+
+
+###  http://example.org/cc#usesMethodology
+:usesMethodology rdf:type owl:ObjectProperty ;
+                 rdfs:domain :Project ;
+                 rdfs:range :Methodology ;
+                 rdfs:label "cc:uses methodology"^^xsd:string .
+
+
+###  http://example.org/cc#wasIssuedBy
+:wasIssuedBy rdf:type owl:ObjectProperty ;
+             rdfs:subPropertyOf <http://www.w3.org/ns/prov#wasAssociatedWith> ;
+             rdfs:domain :IssuanceActivity ;
+             rdfs:range :RegistryOperator ;
+             rdfs:label "cc:was issued by"^^xsd:string .
+
+
+###  http://example.org/cc#wasVerifiedBy
+:wasVerifiedBy rdf:type owl:ObjectProperty ;
+               rdfs:subPropertyOf <http://www.w3.org/ns/prov#wasAssociatedWith> ;
+               rdfs:domain :IssuanceActivity ;
+               rdfs:range :Validator ;
+               rdfs:label "cc:was verified by"^^xsd:string .
+
+
+###  http://www.w3.org/ns/prov#generated
+<http://www.w3.org/ns/prov#generated> rdf:type owl:ObjectProperty .
+
+
+###  http://www.w3.org/ns/prov#used
+<http://www.w3.org/ns/prov#used> rdf:type owl:ObjectProperty .
+
+
+###  http://www.w3.org/ns/prov#wasAssociatedWith
+<http://www.w3.org/ns/prov#wasAssociatedWith> rdf:type owl:ObjectProperty .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  http://example.org/cc#bufferCreditsReleasedToProject
+:bufferCreditsReleasedToProject rdf:type owl:DatatypeProperty ;
+                                rdfs:domain :Project ;
+                                rdfs:range xsd:integer ;
+                                rdfs:label "cc:buffer credits released to project"^^xsd:string .
+
+
+###  http://example.org/cc#creditId
+:creditId rdf:type owl:DatatypeProperty ;
+          rdfs:domain :CarbonCredit ;
+          rdfs:range xsd:string ;
+          rdfs:comment "Unique identifier assigned to an individual carbon credit or batch."@en ;
+          rdfs:label "credit ID"@en .
+
+
+###  http://example.org/cc#dateAddedToDatabase
+:dateAddedToDatabase rdf:type owl:DatatypeProperty ;
+                     rdfs:domain :Project ;
+                     rdfs:range xsd:date ;
+                     rdfs:label "cc:date project added to database"^^xsd:string .
+
+
+###  http://example.org/cc#estimatedAnnualEmissionReductions
+:estimatedAnnualEmissionReductions rdf:type owl:DatatypeProperty ;
+                                   rdfs:domain :Project ;
+                                   rdfs:range xsd:integer ;
+                                   rdfs:label "cc:estimated annual emission reductions"^^xsd:string .
+
+
+###  http://example.org/cc#firstVintageYear
+:firstVintageYear rdf:type owl:DatatypeProperty ;
+                  rdfs:domain :Project ;
+                  rdfs:range xsd:gYear ;
+                  rdfs:label "cc:first year of project (vintage)"^^xsd:string .
+
+
+###  http://example.org/cc#hasActivityType
+:hasActivityType rdf:type owl:DatatypeProperty ;
+                 rdfs:domain :Project ;
+                 rdfs:range xsd:string ;
+                 rdfs:label "cc:activity type"^^xsd:string .
+
+
+###  http://example.org/cc#hasBerkeleyNotes
+:hasBerkeleyNotes rdf:type owl:DatatypeProperty ;
+                  rdfs:domain :Project ;
+                  rdfs:range xsd:string ;
+                  rdfs:label "cc:notes from Berkeley Carbon Trading Project"^^xsd:string .
+
+
+###  http://example.org/cc#hasCreditID
+:hasCreditID rdf:type owl:DatatypeProperty ;
+             rdfs:domain :CarbonCredit ;
+             rdfs:range xsd:string ;
+             rdfs:label "cc:credit ID"^^xsd:string .
+
+
+###  http://example.org/cc#hasMethodologyCode
+:hasMethodologyCode rdf:type owl:DatatypeProperty ;
+                    rdfs:domain :Project ;
+                    rdfs:range xsd:string ;
+                    rdfs:label "cc:methodology / protocol code"^^xsd:string .
+
+
+###  http://example.org/cc#hasMethodologyVersion
+:hasMethodologyVersion rdf:type owl:DatatypeProperty ;
+                       rdfs:domain :Project ;
+                       rdfs:range xsd:string ;
+                       rdfs:label "cc:methodology version"^^xsd:string .
+
+
+###  http://example.org/cc#hasProjectDescription
+:hasProjectDescription rdf:type owl:DatatypeProperty ;
+                       rdfs:domain :Project ;
+                       rdfs:range xsd:string ;
+                       rdfs:label "cc:project description"^^xsd:string .
+
+
+###  http://example.org/cc#hasProjectID
+:hasProjectID rdf:type owl:DatatypeProperty ;
+              rdfs:domain :Project ;
+              rdfs:range xsd:string ;
+              rdfs:label "cc:project ID"^^xsd:string .
+
+
+###  http://example.org/cc#hasProjectName
+:hasProjectName rdf:type owl:DatatypeProperty ;
+                rdfs:domain :Project ;
+                rdfs:range xsd:string ;
+                rdfs:label "cc:project name"^^xsd:string .
+
+
+###  http://example.org/cc#hasProjectSiteLocation
+:hasProjectSiteLocation rdf:type owl:DatatypeProperty ;
+                        rdfs:domain :Project ;
+                        rdfs:range xsd:string ;
+                        rdfs:label "cc:project site location"^^xsd:string .
+
+
+###  http://example.org/cc#hasProjectWebsite
+:hasProjectWebsite rdf:type owl:DatatypeProperty ;
+                   rdfs:domain :Project ;
+                   rdfs:range xsd:anyURI .
+
+
+###  http://example.org/cc#hasReductionOrRemoval
+:hasReductionOrRemoval rdf:type owl:DatatypeProperty ;
+                       rdfs:domain :Project ;
+                       rdfs:range xsd:string ;
+                       rdfs:label "cc:reduction or removal"^^xsd:string .
+
+
+###  http://example.org/cc#hasRegistryNotes
+:hasRegistryNotes rdf:type owl:DatatypeProperty ;
+                  rdfs:domain :Project ;
+                  rdfs:range xsd:string ;
+                  rdfs:label "cc:notes from registry"^^xsd:string .
+
+
+###  http://example.org/cc#hasRegistryProjectType
+:hasRegistryProjectType rdf:type owl:DatatypeProperty ;
+                        rdfs:domain :Project ;
+                        rdfs:range xsd:string ;
+                        rdfs:label "cc:project type from registry"^^xsd:string .
+
+
+###  http://example.org/cc#hasScope
+:hasScope rdf:type owl:DatatypeProperty ;
+          rdfs:domain :Project ;
+          rdfs:range xsd:string ;
+          rdfs:label "cc:scope (e.g. Agriculture)"^^xsd:string .
+
+
+###  http://example.org/cc#hasVoluntaryRegistryName
+:hasVoluntaryRegistryName rdf:type owl:DatatypeProperty ;
+                          rdfs:domain :Project ;
+                          rdfs:range xsd:string ;
+                          rdfs:label "cc:voluntary registry name (text)"^^xsd:string .
+
+
+###  http://example.org/cc#hasVoluntaryStatus
+:hasVoluntaryStatus rdf:type owl:DatatypeProperty ;
+                    rdfs:domain :Project ;
+                    rdfs:range xsd:string ;
+                    rdfs:label "cc:voluntary status"^^xsd:string .
+
+
+###  http://example.org/cc#reversalsCoveredByBuffer
+:reversalsCoveredByBuffer rdf:type owl:DatatypeProperty ;
+                          rdfs:domain :Project ;
+                          rdfs:range xsd:integer ;
+                          rdfs:label "cc:reversals covered by buffer"^^xsd:string .
+
+
+###  http://example.org/cc#reversalsNotCoveredByBuffer
+:reversalsNotCoveredByBuffer rdf:type owl:DatatypeProperty ;
+                             rdfs:domain :Project ;
+                             rdfs:range xsd:integer ;
+                             rdfs:label "cc:reversals NOT covered by buffer"^^xsd:string .
+
+
+###  http://example.org/cc#totalBufferPoolDeposits
+:totalBufferPoolDeposits rdf:type owl:DatatypeProperty ;
+                         rdfs:domain :Project ;
+                         rdfs:range xsd:integer ;
+                         rdfs:label "cc:total buffer pool deposits"^^xsd:string .
+
+
+###  http://example.org/cc#totalCreditsIssued
+:totalCreditsIssued rdf:type owl:DatatypeProperty ;
+                    rdfs:domain :Project ;
+                    rdfs:range xsd:integer ;
+                    rdfs:label "cc:total credits issued"^^xsd:string .
+
+
+###  http://example.org/cc#totalCreditsRemaining
+:totalCreditsRemaining rdf:type owl:DatatypeProperty ;
+                       rdfs:domain :Project ;
+                       rdfs:range xsd:integer ;
+                       rdfs:label "cc:total credits remaining"^^xsd:string .
+
+
+###  http://example.org/cc#totalCreditsRetired
+:totalCreditsRetired rdf:type owl:DatatypeProperty ;
+                     rdfs:domain :Project ;
+                     rdfs:range xsd:integer ;
+                     rdfs:label "cc:total credits retired"^^xsd:string .
+
+
+###  http://example.org/cc#vintageYear
+:vintageYear rdf:type owl:DatatypeProperty ;
+             rdfs:domain :CarbonCredit ;
+             rdfs:range xsd:gYear ;
+             rdfs:label "cc:vintage year"^^xsd:string .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://example.org/cc#AssuranceLevel
+:AssuranceLevel rdf:type owl:Class ;
+                rdfs:comment "Strength of assurance associated with a provenance event or evidence item."@en ;
+                rdfs:label "Assurance level"@en .
+
+
+###  http://example.org/cc#CarbonCredit
+:CarbonCredit rdf:type owl:Class ;
+              rdfs:subClassOf <http://www.w3.org/ns/prov#Entity> ;
+              rdfs:label "cc:carbon credit"^^xsd:string .
+
+
+###  http://example.org/cc#Country
+:Country rdf:type owl:Class ;
+         rdfs:subClassOf <http://www.w3.org/ns/prov#Entity> ;
+         rdfs:label "cc:Country"^^xsd:string .
+
+
+###  http://example.org/cc#CreditOwner
+:CreditOwner rdf:type owl:Class ;
+             rdfs:subClassOf <http://www.w3.org/ns/prov#Agent> ;
+             rdfs:comment "Agent that legally owns carbon credits and can initiate transfers or retirements."@en ;
+             rdfs:label "Credit owner"@en .
+
+
+###  http://example.org/cc#EventRole
+:EventRole rdf:type owl:Class ;
+           rdfs:comment "Classification of provenance activities as creation, transformation, or termination events."@en ;
+           rdfs:label "Lifecycle role"@en .
+
+
+###  http://example.org/cc#EvidenceType
+:EvidenceType rdf:type owl:Class ;
+              rdfs:comment "Kind of document or artefact that supports a provenance event, such as a monitoring report or verification statement."@en ;
+              rdfs:label "Evidence type"@en .
+
+
+###  http://example.org/cc#IssuanceActivity
+:IssuanceActivity rdf:type owl:Class ;
+                  rdfs:subClassOf <http://www.w3.org/ns/prov#Activity> ;
+                  rdfs:label "cc:issuance activity"^^xsd:string .
+
+
+###  http://example.org/cc#Market
+:Market rdf:type owl:Class ;
+        rdfs:comment "Regulatory or voluntary context in which credits are issued or traded."@en ;
+        rdfs:label "Market type"@en .
+
+
+###  http://example.org/cc#Mechanism
+:Mechanism rdf:type owl:Class ;
+           rdfs:comment "Classification of whether a credit is avoidance-based or removal-based."@en ;
+           rdfs:label "Mitigation mechanism"@en .
+
+
+###  http://example.org/cc#Methodology
+:Methodology rdf:type owl:Class ;
+             rdfs:subClassOf <http://www.w3.org/ns/prov#Entity> ;
+             rdfs:label "cc:Methodology / protocol"^^xsd:string .
+
+
+###  http://example.org/cc#Project
+:Project rdf:type owl:Class ;
+         rdfs:subClassOf <http://www.w3.org/ns/prov#Entity> ;
+         rdfs:label "cc:Project"^^xsd:string .
+
+
+###  http://example.org/cc#ProjectCategory
+:ProjectCategory rdf:type owl:Class ;
+                 rdfs:comment "High-level category grouping projects by mitigation approach (e.g. ARR, land management)."@en ;
+                 rdfs:label "Project category"@en .
+
+
+###  http://example.org/cc#ProjectDeveloper
+:ProjectDeveloper rdf:type owl:Class ;
+                  rdfs:subClassOf <http://www.w3.org/ns/prov#Agent> ;
+                  rdfs:label "cc:Project developer"^^xsd:string .
+
+
+###  http://example.org/cc#ProjectOperator
+:ProjectOperator rdf:type owl:Class ;
+                 rdfs:subClassOf <http://www.w3.org/ns/prov#Agent> ;
+                 rdfs:label "cc:Project operator"^^xsd:string .
+
+
+###  http://example.org/cc#ProjectOwner
+:ProjectOwner rdf:type owl:Class ;
+              rdfs:subClassOf <http://www.w3.org/ns/prov#Agent> ;
+              rdfs:label "cc:Project owner"^^xsd:string .
+
+
+###  http://example.org/cc#ProjectStatus
+:ProjectStatus rdf:type owl:Class ;
+               rdfs:subClassOf <http://www.w3.org/ns/prov#Entity> ;
+               rdfs:label "cc:Project status"^^xsd:string .
+
+
+###  http://example.org/cc#ProjectType
+:ProjectType rdf:type owl:Class ;
+             rdfs:subClassOf <http://www.w3.org/ns/prov#Entity> ;
+             rdfs:label "cc:Project type / sector"^^xsd:string .
+
+
+###  http://example.org/cc#Region
+:Region rdf:type owl:Class ;
+        rdfs:subClassOf <http://www.w3.org/ns/prov#Entity> ;
+        rdfs:label "cc:Region"^^xsd:string .
+
+
+###  http://example.org/cc#Registry
+:Registry rdf:type owl:Class ;
+          rdfs:subClassOf <http://www.w3.org/ns/prov#Agent> ;
+          rdfs:label "cc:Registry"^^xsd:string .
+
+
+###  http://example.org/cc#RegistryOperator
+:RegistryOperator rdf:type owl:Class ;
+                  rdfs:subClassOf :Registry ,
+                                  <http://www.w3.org/ns/prov#Agent> ;
+                  rdfs:label "cc:registry operator"^^xsd:string .
+
+
+###  http://example.org/cc#RetirementActivity
+:RetirementActivity rdf:type owl:Class ;
+                    rdfs:subClassOf <http://www.w3.org/ns/prov#Activity> ;
+                    rdfs:comment "Activity that retires or cancels a batch of carbon credits."@en ;
+                    rdfs:label "Retirement activity"@en .
+
+
+###  http://example.org/cc#State
+:State rdf:type owl:Class ;
+       rdfs:subClassOf <http://www.w3.org/ns/prov#Entity> ;
+       rdfs:label "cc:State / Province"^^xsd:string .
+
+
+###  http://example.org/cc#TransferActivity
+:TransferActivity rdf:type owl:Class ;
+                  rdfs:subClassOf <http://www.w3.org/ns/prov#Activity> ;
+                  rdfs:label "cc:transfer activity"^^xsd:string .
+
+
+###  http://example.org/cc#Validator
+:Validator rdf:type owl:Class ;
+           rdfs:subClassOf <http://www.w3.org/ns/prov#Agent> ;
+           rdfs:label "cc:validator"^^xsd:string .
+
+
+###  http://example.org/cc#Verifier
+:Verifier rdf:type owl:Class ;
+          rdfs:subClassOf <http://www.w3.org/ns/prov#Agent> ;
+          rdfs:label "cc:Verifier"^^xsd:string .
+
+
+###  http://webprotege.stanford.edu/RBFYIXLn4B3b5UfHHkGxMzn
+<http://webprotege.stanford.edu/RBFYIXLn4B3b5UfHHkGxMzn> rdf:type owl:Class ;
+                                                         rdfs:subClassOf <http://www.w3.org/ns/prov#Activity> ;
+                                                         rdfs:label "retirement activity" .
+
+
+###  http://www.w3.org/2002/07/owl#Thing
+owl:Thing rdfs:subClassOf [ rdf:type owl:Restriction ;
+                            owl:onProperty :hasActivityType ;
+                            owl:hasValue "cc:Activity"^^xsd:string
+                          ] .
+
+
+###  http://www.w3.org/ns/prov#Activity
+<http://www.w3.org/ns/prov#Activity> rdf:type owl:Class ;
+                                     rdfs:subClassOf owl:Thing ;
+                                     rdfs:label "cc:Activity"^^xsd:string .
+
+
+###  http://www.w3.org/ns/prov#Agent
+<http://www.w3.org/ns/prov#Agent> rdf:type owl:Class ;
+                                  rdfs:subClassOf owl:Thing ;
+                                  rdfs:label "cc:Agent"^^xsd:string .
+
+
+###  http://www.w3.org/ns/prov#Entity
+<http://www.w3.org/ns/prov#Entity> rdf:type owl:Class ;
+                                   rdfs:subClassOf owl:Thing ;
+                                   rdfs:label "cc:Entity"^^xsd:string .
+
+
+#################################################################
+#    Individuals
+#################################################################
+
+###  http://example.org/cc#AfforestationReforestation
+:AfforestationReforestation rdf:type owl:NamedIndividual ,
+                                     :ProjectCategory ;
+                            rdfs:label "Afforestation and reforestation (ARR)"@en .
+
+
+###  http://example.org/cc#Avoidance
+:Avoidance rdf:type owl:NamedIndividual ,
+                    :Mechanism ;
+           rdfs:label "Avoidance"@en .
+
+
+###  http://example.org/cc#ComplianceMarket
+:ComplianceMarket rdf:type owl:NamedIndividual ,
+                           :Market ;
+                  rdfs:label "Compliance"@en .
+
+
+###  http://example.org/cc#ContractDocument
+:ContractDocument rdf:type owl:NamedIndividual ,
+                           :EvidenceType ;
+                  rdfs:label "Contract document"@en .
+
+
+###  http://example.org/cc#CreationEvent
+:CreationEvent rdf:type owl:NamedIndividual ,
+                        :EventRole ;
+               rdfs:label "Creation event"@en .
+
+
+###  http://example.org/cc#EnergyIndustrial
+:EnergyIndustrial rdf:type owl:NamedIndividual ,
+                           :ProjectCategory ;
+                  rdfs:label "Energy and industrial"@en .
+
+
+###  http://example.org/cc#HighAssurance
+:HighAssurance rdf:type owl:NamedIndividual ,
+                        :AssuranceLevel ;
+               rdfs:label "High assurance"@en .
+
+
+###  http://example.org/cc#HouseholdCommunity
+:HouseholdCommunity rdf:type owl:NamedIndividual ,
+                             :ProjectCategory ;
+                    rdfs:label "Household and community"@en .
+
+
+###  http://example.org/cc#LandManagement
+:LandManagement rdf:type owl:NamedIndividual ,
+                         :ProjectCategory ;
+                rdfs:label "Land management"@en .
+
+
+###  http://example.org/cc#LaurelbrookFarm
+:LaurelbrookFarm rdf:type owl:NamedIndividual ,
+                          :ProjectDeveloper ;
+                 rdfs:label "Laurelbrook Farm" .
+
+
+###  http://example.org/cc#LowAssurance
+:LowAssurance rdf:type owl:NamedIndividual ,
+                       :AssuranceLevel ;
+              rdfs:label "Low assurance"@en .
+
+
+###  http://example.org/cc#MediumAssurance
+:MediumAssurance rdf:type owl:NamedIndividual ,
+                          :AssuranceLevel ;
+                 rdfs:label "Medium assurance"@en .
+
+
+###  http://example.org/cc#MonitoringReport
+:MonitoringReport rdf:type owl:NamedIndividual ,
+                           :EvidenceType ;
+                  rdfs:label "Monitoring report"@en .
+
+
+###  http://example.org/cc#NorthAmerica
+:NorthAmerica rdf:type owl:NamedIndividual ,
+                       :Region ;
+              rdfs:label "North America" .
+
+
+###  http://example.org/cc#OnChainAnchor
+:OnChainAnchor rdf:type owl:NamedIndividual ,
+                        :EvidenceType ;
+               rdfs:label "On-chain anchor"@en .
+
+
+###  http://example.org/cc#RegistryLog
+:RegistryLog rdf:type owl:NamedIndividual ,
+                      :EvidenceType ;
+             rdfs:label "Registry log"@en .
+
+
+###  http://example.org/cc#Removal
+:Removal rdf:type owl:NamedIndividual ,
+                  :Mechanism ;
+         rdfs:label "Removal"@en .
+
+
+###  http://example.org/cc#TerminationEvent
+:TerminationEvent rdf:type owl:NamedIndividual ,
+                           :EventRole ;
+                  rdfs:label "Termination event"@en .
+
+
+###  http://example.org/cc#TransformationEvent
+:TransformationEvent rdf:type owl:NamedIndividual ,
+                              :EventRole ;
+                     rdfs:label "Transformation event"@en .
+
+
+###  http://example.org/cc#UnitedStates
+:UnitedStates rdf:type owl:NamedIndividual ,
+                       :Country ;
+              rdfs:label "United States" .
+
+
+###  http://example.org/cc#VCS
+:VCS rdf:type owl:NamedIndividual ,
+              :Registry ;
+     rdfs:label "Verra VCS registry" .
+
+
+###  http://example.org/cc#VCS1089_LaurelbrookProject
+:VCS1089_LaurelbrookProject rdf:type owl:NamedIndividual ,
+                                     :Project ;
+                            :hasCountry :UnitedStates ;
+                            :hasDeveloper :LaurelbrookFarm ;
+                            :hasProjectCategory :WasteHandlingAndDisposal ;
+                            :hasRegion :NorthAmerica ;
+                            :hasRegistry :VCS ;
+                            :dateAddedToDatabase "2020-12-08"^^xsd:date ;
+                            :firstVintageYear "2010"^^xsd:gYear ;
+                            :hasActivityType "Solid Waste Separation" ;
+                            :hasMethodologyCode "AMS-III.Y" ;
+                            :hasProjectID "VCS1089" ;
+                            :hasProjectName "Laurelbrook Farm Dairy Manure Advanced Separation Project" ;
+                            :hasProjectSiteLocation "" ;
+                            :hasReductionOrRemoval "Reduction" ;
+                            :hasRegistryProjectType "Waste handling and disposal" ;
+                            :hasScope "Agriculture" ;
+                            :hasVoluntaryRegistryName "VCS" ;
+                            :totalCreditsIssued 39273 ;
+                            :totalCreditsRemaining 9639 ;
+                            :totalCreditsRetired 29634 ;
+                            :hasProjectWebsite <https://registry.verra.org/app/projectDetail/VCS/1089> .
+
+
+###  http://example.org/cc#ValidationStatement
+:ValidationStatement rdf:type owl:NamedIndividual ,
+                              :EvidenceType ;
+                     rdfs:label "Validation statement"@en .
+
+
+###  http://example.org/cc#VerificationStatement
+:VerificationStatement rdf:type owl:NamedIndividual ,
+                                :EvidenceType ;
+                       rdfs:label "Verification statement"@en .
+
+
+###  http://example.org/cc#VoluntaryMarket
+:VoluntaryMarket rdf:type owl:NamedIndividual ,
+                          :Market ;
+                 rdfs:label "Voluntary"@en .
+
+
+###  http://example.org/cc#WasteHandlingAndDisposal
+:WasteHandlingAndDisposal rdf:type owl:NamedIndividual ,
+                                   :ProjectType ;
+                          rdfs:label "Waste handling and disposal" .
+
+
+###  http://www.semanticweb.org/owl/owlapi/turtle#credit_VCS1176_all
+<http://www.semanticweb.org/owl/owlapi/turtle#credit_VCS1176_all> rdf:type owl:NamedIndividual ,
+                                                                           :CarbonCredit ;
+                                                                  :isCreditOf <http://www.semanticweb.org/owl/owlapi/turtle#proj_VCS1176> ;
+                                                                  :totalCreditsIssued 0 ;
+                                                                  :totalCreditsRemaining 0 ;
+                                                                  :totalCreditsRetired 0 ;
+                                                                  :creditID "VCS1176" ;
+                                                                  rdfs:label "Carbon credits for project VCS1176 (none issued)" .
+
+
+###  http://www.semanticweb.org/owl/owlapi/turtle#credit_VCS1225_all
+<http://www.semanticweb.org/owl/owlapi/turtle#credit_VCS1225_all> rdf:type owl:NamedIndividual ,
+                                                                           :CarbonCredit ;
+                                                                  :isCreditOf <http://www.semanticweb.org/owl/owlapi/turtle#proj_VCS1225> ;
+                                                                  :totalCreditsIssued 325825 ;
+                                                                  :totalCreditsRemaining 132290 ;
+                                                                  :totalCreditsRetired 193535 ;
+                                                                  :vintageYear "2012"^^xsd:gYear ;
+                                                                  :creditID "VCS1225" ;
+                                                                  rdfs:label "Carbon credits for project VCS1225 (all vintages)" .
+
+
+###  http://www.semanticweb.org/owl/owlapi/turtle#dev_EmergentVenturesIndia
+<http://www.semanticweb.org/owl/owlapi/turtle#dev_EmergentVenturesIndia> rdf:type owl:NamedIndividual ,
+                                                                                  :ProjectDeveloper ;
+                                                                         :agentName "Emergent Ventures India Private Limited" ;
+                                                                         rdfs:label "Emergent Ventures India Private Limited" .
+
+
+###  http://www.semanticweb.org/owl/owlapi/turtle#dev_ViAgroforestry
+<http://www.semanticweb.org/owl/owlapi/turtle#dev_ViAgroforestry> rdf:type owl:NamedIndividual ,
+                                                                           :ProjectDeveloper ;
+                                                                  :agentName "Vi Agroforestry Programme" ;
+                                                                  rdfs:label "Vi Agroforestry Programme" .
+
+
+###  http://www.semanticweb.org/owl/owlapi/turtle#issuance_VCS1176_attempt
+<http://www.semanticweb.org/owl/owlapi/turtle#issuance_VCS1176_attempt> rdf:type owl:NamedIndividual ,
+                                                                                 :IssuanceActivity ;
+                                                                        :wasIssuedBy <http://www.semanticweb.org/owl/owlapi/turtle#reg_VCS> ;
+                                                                        :wasVerifiedBy <http://www.semanticweb.org/owl/owlapi/turtle#val_None> ;
+                                                                        <http://www.w3.org/ns/prov#used> <http://www.semanticweb.org/owl/owlapi/turtle#proj_VCS1176> ;
+                                                                        rdfs:label "Attempted issuance for VCS1176 (rejected)" .
+
+
+###  http://www.semanticweb.org/owl/owlapi/turtle#issuance_VCS1225_initial
+<http://www.semanticweb.org/owl/owlapi/turtle#issuance_VCS1225_initial> rdf:type owl:NamedIndividual ,
+                                                                                 :IssuanceActivity ;
+                                                                        :generatedCredit <http://www.semanticweb.org/owl/owlapi/turtle#credit_VCS1225_all> ;
+                                                                        :wasIssuedBy <http://www.semanticweb.org/owl/owlapi/turtle#reg_VCS> ;
+                                                                        <http://www.w3.org/ns/prov#used> <http://www.semanticweb.org/owl/owlapi/turtle#proj_VCS1225> ;
+                                                                        rdfs:label "Initial issuance for VCS1225" .
+
+
+###  http://www.semanticweb.org/owl/owlapi/turtle#proj_VCS1176
+<http://www.semanticweb.org/owl/owlapi/turtle#proj_VCS1176> rdf:type owl:NamedIndividual ,
+                                                                     :Project ;
+                                                            :hasProjectID "VCS1176" ;
+                                                            :hasProjectName "System of Root Intensification (SRI) programme" ;
+                                                            :hasScope "Agriculture" ;
+                                                            :hasCountry "India" ;
+                                                            :hasProjectDeveloper <http://www.semanticweb.org/owl/owlapi/turtle#dev_EmergentVenturesIndia> ;
+                                                            :hasProjectStatus "Rejected by Administrator" ;
+                                                            :hasProjectType "Rice Emission Reductions" ;
+                                                            :hasRegion "Southern Asia" ;
+                                                            :hasRegistry "VCS" ;
+                                                            rdfs:comment "Rejected project illustrating non-approved case in the taxonomy (status = Rejected by Administrator)." ;
+                                                            rdfs:label "System of Root Intensification (SRI) programme: Reduction of Methane emissions and water consumption in rice fields of India" .
+
+
+###  http://www.semanticweb.org/owl/owlapi/turtle#proj_VCS1225
+<http://www.semanticweb.org/owl/owlapi/turtle#proj_VCS1225> rdf:type owl:NamedIndividual ,
+                                                                     :Project ;
+                                                            :hasProjectID "VCS1225" ;
+                                                            :hasProjectName "Kenya Agricultural Carbon Project" ;
+                                                            :hasScope "Agriculture" ;
+                                                            :hasCountry "Kenya" ;
+                                                            :hasProjectDeveloper <http://www.semanticweb.org/owl/owlapi/turtle#dev_ViAgroforestry> ;
+                                                            :hasProjectStatus "Late to verify" ;
+                                                            :hasProjectType "Sustainable Agriculture" ;
+                                                            :hasRegion "Sub-Saharan Africa" ;
+                                                            :hasRegistry "VCS" ;
+                                                            rdfs:comment "Project implementing VM0017 Adoption of Sustainable Agricultural Land Management in Kenya." ;
+                                                            rdfs:label "Kenya Agricultural Carbon Project" .
+
+
+###  http://www.semanticweb.org/owl/owlapi/turtle#reg_VCS
+<http://www.semanticweb.org/owl/owlapi/turtle#reg_VCS> rdf:type owl:NamedIndividual .
+
+
+###  http://www.semanticweb.org/owl/owlapi/turtle#val_None
+<http://www.semanticweb.org/owl/owlapi/turtle#val_None> rdf:type owl:NamedIndividual ,
+                                                                 :Validator ;
+                                                        :agentName "No validator" ;
+                                                        rdfs:label "No validator (project rejected)" .
+
+
+#################################################################
+#    Annotations
+#################################################################
+
+:hasCountry rdfs:label "cc:has country"^^xsd:string .
+
+
+:hasProjectStatus rdfs:label "cc:has project status"^^xsd:string .
+
+
+:hasProjectWebsite rdfs:label "cc:project website"^^xsd:string .
+
+
+:hasRegion rdfs:label "cc:has region"^^xsd:string .
+
+
+:hasRegistry rdfs:label "cc:has registry"^^xsd:string .
+
+
+###  Generated by the OWL API (version 4.5.13) https://github.com/owlcs/owlapi
