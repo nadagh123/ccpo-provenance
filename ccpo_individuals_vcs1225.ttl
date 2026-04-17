@@ -1,0 +1,161 @@
+@prefix cc:    <https://w3id.org/ccpo#> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ind:   <https://w3id.org/ccpo/individuals#> .
+
+# ===========================================================================
+# CCPO Individuals — Traceability Scenario
+# Source: CCPO_CCPT implementation in WebProtégé (Chapter 5, Section 5.6)
+# Scenario: Kenya Agricultural Carbon Project (VCS1225)
+#           Used to demonstrate backward trace, forward trace, and
+#           integrity checks as described in the thesis.
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# VALID SCENARIO: VCS1225 — Kenya Agricultural Carbon Project
+# Demonstrates a complete, valid provenance chain.
+# ---------------------------------------------------------------------------
+
+# Project individual
+ind:KenyaAgriculturalCarbonProject
+    a cc:Project ;
+    rdfs:label "Kenya Agricultural Carbon Project" ;
+    cc:projectID "VCS1225" ;
+    cc:projectType "REDD+ / Avoided Deforestation" ;
+    cc:projectLocation "Kenya, East Africa" ;
+    cc:totalCreditsIssued 2500000 ;
+    cc:totalCreditsRetired 1200000 ;
+    cc:totalCreditsRemaining 1300000 ;
+    cc:hasMethodology ind:VM0015 ;
+    cc:hasProjectStatus cc:Active ;
+    rdfs:comment "Real registry project used in Chapter 5 traceability scenario." .
+
+# Methodology individual
+ind:VM0015
+    a cc:Methodology ;
+    rdfs:label "VM0015 — Avoided Unplanned Deforestation" ;
+    cc:methodologyVersion "1.3" .
+
+# Registry individual
+ind:reg_VCS
+    a cc:Registry ;
+    rdfs:label "Verra — Verified Carbon Standard" .
+
+# Verifier individual
+ind:VCS1225_Verifier
+    a cc:Verifier ;
+    rdfs:label "Accredited Verifier for VCS1225" .
+
+# MRV Evidence individuals
+ind:VerificationStatement_VCS1225
+    a cc:VerificationStatement ;
+    rdfs:label "Verification Statement — VCS1225" ;
+    rdfs:comment "Third-party verification statement confirming emissions reductions for VCS1225." ;
+    cc:hasOnChainAnchor ind:OnChainAnchor_VCS1225_VS .
+
+ind:MonitoringReport_VCS1225
+    a cc:MonitoringReport ;
+    rdfs:label "Monitoring Report — VCS1225" ;
+    rdfs:comment "Satellite and sensor-based monitoring report for the Kenya project." ;
+    cc:hasOnChainAnchor ind:OnChainAnchor_VCS1225_MR .
+
+# On-chain anchor individuals
+ind:OnChainAnchor_VCS1225_VS
+    a cc:OnChainAnchor ;
+    rdfs:label "On-Chain Anchor — Verification Statement" ;
+    cc:contentHash "a3f4c2d1e9b7..." ;
+    rdfs:comment "SHA-256 hash of VerificationStatement committed on Ethereum." .
+
+ind:OnChainAnchor_VCS1225_MR
+    a cc:OnChainAnchor ;
+    rdfs:label "On-Chain Anchor — Monitoring Report" ;
+    cc:contentHash "d8e2a1f3c5b9..." ;
+    rdfs:comment "SHA-256 hash of MonitoringReport committed on Ethereum." .
+
+# Issuance Activity individual
+ind:InitialIssuance_VCS1225
+    a cc:IssuanceActivity ;
+    rdfs:label "Initial issuance for VCS1225" ;
+    rdfs:comment "Issuance event that created the Kenya Agricultural Carbon Project credits." ;
+    cc:timestamp "2019-06-15T00:00:00Z"^^xsd:dateTime ;
+    cc:transactionID "0xabc123..." ;
+    cc:hasEvidence ind:VerificationStatement_VCS1225 ;
+    cc:hasEvidence ind:MonitoringReport_VCS1225 ;
+    cc:generatedCredit ind:Credits_VCS1225 ;
+    prov:wasAssociatedWith ind:reg_VCS .
+
+# Carbon Credit individual
+ind:Credits_VCS1225
+    a cc:CarbonCredit ;
+    rdfs:label "Carbon credits for project VCS1225 (all vintages)" ;
+    cc:creditID "VCS1225-CREDIT-001" ;
+    cc:vintageYear 2019 ;
+    cc:quantity 2500000 ;
+    cc:creditStatus "issued" ;
+    cc:corsiaEligible false ;
+    cc:isCreditOf ind:KenyaAgriculturalCarbonProject ;
+    cc:wasIssuedBy ind:reg_VCS ;
+    cc:wasValidatedBy ind:VCS1225_Verifier ;
+    prov:wasGeneratedBy ind:InitialIssuance_VCS1225 .
+
+
+# ---------------------------------------------------------------------------
+# INTEGRITY VIOLATION SCENARIO: VCS1176 — Rejected Issuance
+# Demonstrates Integrity Check A: a credit that lacks a valid issuance.
+# An OWL 2 reasoner will flag this individual as a provenance violation.
+# ---------------------------------------------------------------------------
+
+# Rejected issuance activity (no evidence linked — integrity violation)
+ind:AttemptedIssuance_VCS1176
+    a cc:IssuanceActivity ;
+    rdfs:label "Attempted issuance for VCS1176 (rejected)" ;
+    rdfs:comment """This issuance was rejected because no VerificationStatement or
+        MonitoringReport evidence is linked. The OWL 2 reasoner will flag this
+        as violating the IssuanceActivity restriction (must have hasEvidence).""" ;
+    cc:timestamp "2020-03-10T00:00:00Z"^^xsd:dateTime .
+
+# Credit with no valid issuance link (integrity violation)
+ind:Credits_VCS1176
+    a cc:CarbonCredit ;
+    rdfs:label "Carbon credits for VCS1176 (none issued)" ;
+    rdfs:comment """This credit individual has no prov:wasGeneratedBy link to a valid
+        IssuanceActivity with evidence. The OWL 2 reasoner detects the violation:
+        Integrity Check A — credit exists without valid issuance chain.""" ;
+    cc:creditID "VCS1176-CREDIT-001" ;
+    cc:creditStatus "issued" .
+    # NOTE: Deliberately missing: prov:wasGeneratedBy, cc:isCreditOf, cc:wasIssuedBy
+
+
+# ---------------------------------------------------------------------------
+# TRANSFER AFTER RETIREMENT INTEGRITY CHECK (Integrity Check B)
+# A credit is marked retired, then a transfer is attempted — violation.
+# ---------------------------------------------------------------------------
+
+ind:EnergyCompany
+    a cc:Buyer ;
+    rdfs:label "Energy Company (Buyer)" .
+
+ind:AirlineCompany
+    a cc:Buyer ;
+    rdfs:label "Airline Company (Buyer)" .
+
+ind:Retirement_VCS1225_Energy
+    a cc:RetirementActivity ;
+    rdfs:label "Retirement of VCS1225 credits by Energy Company" ;
+    cc:timestamp "2022-01-10T00:00:00Z"^^xsd:dateTime ;
+    prov:wasAssociatedWith ind:EnergyCompany ;
+    prov:used ind:Credits_VCS1225 .
+
+# This transfer AFTER retirement should be flagged as a violation
+ind:InvalidTransfer_VCS1225_Airline
+    a cc:TransferActivity ;
+    rdfs:label "INVALID — Attempted transfer to Airline after retirement" ;
+    rdfs:comment """Integrity Check B: This TransferActivity timestamp (2022-03-01)
+        is LATER than the RetirementActivity timestamp (2022-01-10) on the same
+        credit. An OWL 2 reasoner detects this lifecycle violation.""" ;
+    cc:timestamp "2022-03-01T00:00:00Z"^^xsd:dateTime ;
+    prov:wasAssociatedWith ind:AirlineCompany ;
+    prov:used ind:Credits_VCS1225 .

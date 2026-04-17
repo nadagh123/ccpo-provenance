@@ -1,0 +1,156 @@
+@prefix cc:    <https://w3id.org/ccpo#> .
+@prefix tax:   <https://w3id.org/ccpo/taxonomy#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+# ===========================================================================
+# Carbon Credit Provenance Taxonomy (CCPT)
+# Companion to the CCPO — provides the classification hierarchy for
+# carbon credits across three primary dimensions:
+#   1. Compliance Type (Compliance vs Voluntary)
+#   2. Project Methodology (REDD+, CDM, Soil Carbon, A/R, etc.)
+#   3. Metadata Attributes (provenance-critical fields)
+#
+# Source: Chapter 5, Section 5.3 — Dr. Nada Alghanmi, UTS 2026
+# ===========================================================================
+
+<https://w3id.org/ccpo/taxonomy>
+    a owl:Ontology ;
+    dcterms:title "Carbon Credit Provenance Taxonomy (CCPT)" ;
+    dcterms:description "Companion taxonomy to the CCPO classifying carbon credits by compliance type, methodology, and metadata." ;
+    dcterms:creator "Dr. Nada Alghanmi" ;
+    owl:versionInfo "1.0" ;
+    owl:imports <https://w3id.org/ccpo> .
+
+
+# ===========================================================================
+# DIMENSION 1: COMPLIANCE TYPE
+# ===========================================================================
+
+tax:ComplianceMarketCredit
+    a owl:Class ;
+    rdfs:subClassOf cc:CarbonCredit ;
+    rdfs:label "Compliance Market Credit" ;
+    rdfs:comment """Carbon credits issued under legally binding emissions reduction
+        frameworks. Subject to regulatory audit obligations and higher verification
+        stringency. Examples: CERs, EUAs, ACCUs.""" .
+
+tax:VoluntaryMarketCredit
+    a owl:Class ;
+    rdfs:subClassOf cc:CarbonCredit ;
+    rdfs:label "Voluntary Market Credit" ;
+    rdfs:comment """Carbon credits issued outside regulatory requirements for
+        corporate sustainability and CSR commitments. Examples: VERs, CORSIA-eligible credits.""" .
+
+# --- Compliance sub-types ---
+
+tax:CER
+    a owl:Class ;
+    rdfs:subClassOf tax:ComplianceMarketCredit ;
+    rdfs:label "Certified Emission Reduction (CER)" ;
+    rdfs:comment "Issued under the Kyoto Protocol's Clean Development Mechanism (CDM) for projects in developing countries." .
+
+tax:EUA
+    a owl:Class ;
+    rdfs:subClassOf tax:ComplianceMarketCredit ;
+    rdfs:label "European Union Allowance (EUA)" ;
+    rdfs:comment "Issued under the EU Emissions Trading System (EU ETS) as tradable units." .
+
+tax:ACCU
+    a owl:Class ;
+    rdfs:subClassOf tax:ComplianceMarketCredit ;
+    rdfs:label "Australian Carbon Credit Unit (ACCU)" ;
+    rdfs:comment "Issued under Australia's Emissions Reduction Fund, regulated by the Clean Energy Regulator." .
+
+# --- Voluntary sub-types ---
+
+tax:VER
+    a owl:Class ;
+    rdfs:subClassOf tax:VoluntaryMarketCredit ;
+    rdfs:label "Verified Emission Reduction (VER)" ;
+    rdfs:comment "Issued under voluntary standards such as Verra VCS or Gold Standard." .
+
+tax:CORSIACredit
+    a owl:Class ;
+    rdfs:subClassOf tax:VoluntaryMarketCredit ;
+    rdfs:label "CORSIA-Eligible Credit" ;
+    rdfs:comment "Credits eligible for use under the ICAO Carbon Offsetting and Reduction Scheme for International Aviation." .
+
+
+# ===========================================================================
+# DIMENSION 2: PROJECT METHODOLOGY
+# ===========================================================================
+
+tax:REDD_Plus
+    a owl:Class ;
+    rdfs:subClassOf cc:Methodology ;
+    rdfs:label "REDD+" ;
+    rdfs:comment """Reducing Emissions from Deforestation and Forest Degradation.
+        MRV relies heavily on satellite imagery and ground-based sensor data.
+        CCPO: large off-chain artefact references with on-chain integrity anchors.""" ;
+    skos:example "VCS1225 — Kenya Agricultural Carbon Project" .
+
+tax:CDM
+    a owl:Class ;
+    rdfs:subClassOf cc:Methodology ;
+    rdfs:label "Clean Development Mechanism (CDM)" ;
+    rdfs:comment """Established under the Kyoto Protocol. Involves periodic site
+        inspections and formal verification cycles. CCPO: structured validation
+        event records linked to specific methodology versions.""" .
+
+tax:SoilCarbon
+    a owl:Class ;
+    rdfs:subClassOf cc:Methodology ;
+    rdfs:label "Soil Carbon Sequestration" ;
+    rdfs:comment "Credits from agricultural practices: reduced tillage, cover cropping, biochar application." .
+
+tax:AfforestationReforestation
+    a owl:Class ;
+    rdfs:subClassOf cc:Methodology ;
+    rdfs:label "Afforestation and Reforestation (A/R)" ;
+    rdfs:comment "Projects creating new forests or restoring degraded lands." .
+
+tax:RenewableEnergy
+    a owl:Class ;
+    rdfs:subClassOf cc:Methodology ;
+    rdfs:label "Renewable Energy" ;
+    rdfs:comment "Offsets from solar, wind, hydroelectric, or geothermal installations displacing fossil fuels." .
+
+tax:MethaneCapture
+    a owl:Class ;
+    rdfs:subClassOf cc:Methodology ;
+    rdfs:label "Methane Capture and Utilisation" ;
+    rdfs:comment "Capturing methane from landfills, wastewater, or agriculture to prevent greenhouse gas release." .
+
+
+# ===========================================================================
+# DIMENSION 3: METADATA ATTRIBUTE PROVENANCE WEIGHT
+# Classifies which attributes are integrity-critical (on-chain candidates)
+# vs. supporting (off-chain candidates).
+# Informs the ICS storage decision framework (Chapter 7).
+# ===========================================================================
+
+tax:IntegrityCriticalAttribute
+    a owl:Class ;
+    rdfs:label "Integrity-Critical Attribute" ;
+    rdfs:comment """High-provenance-weight metadata directly determining a credit's
+        uniqueness, authenticity, and audit trail. Primary candidates for on-chain
+        storage in the ICS decision framework.""" ;
+    skos:note "CreditID, Issuer, VintageYear, Status, Verifier" .
+
+tax:SupportingAttribute
+    a owl:Class ;
+    rdfs:label "Supporting Attribute" ;
+    rdfs:comment """Large, infrequently queried, or privacy-sensitive metadata.
+        Managed as off-chain artefacts with cryptographic anchoring.""" ;
+    skos:note "Registry Documents, Notes, Satellite Imagery, Sensor Logs" .
+
+tax:RegulatoryAttribute
+    a owl:Class ;
+    rdfs:label "Regulatory Attribute" ;
+    rdfs:comment """Attributes required by compliance frameworks (ICVCM, CORSIA, EU ETS).
+        Storage obligations determined by regulatory context.""" ;
+    skos:note "CORSIA Eligibility, Buffer Pool Deposits, Sustainability Certifications" .

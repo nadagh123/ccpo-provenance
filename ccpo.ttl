@@ -1,0 +1,463 @@
+@prefix cc:    <https://w3id.org/ccpo#> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+
+# ===========================================================================
+# Carbon Credit Provenance Ontology (CCPO)
+# Version: 1.0
+# Author: Dr. Nada Alghanmi
+# Institution: University of Technology Sydney (UTS)
+# Supervisor: Dr. Farookh Hussain
+# Year: 2026
+# Namespace: https://w3id.org/ccpo#
+# Extends: W3C PROV-O (http://www.w3.org/ns/prov#)
+# Description:
+#   The CCPO extends the W3C PROV-O standard with domain-specific classes,
+#   properties, and relationships for the carbon credit lifecycle. It enables
+#   semantic interoperability across heterogeneous registries (Verra, Gold
+#   Standard, UNFCCC CDM, Australian Clean Energy Regulator) and supports
+#   backward tracing, forward tracing, and automated integrity checking.
+# ===========================================================================
+
+<https://w3id.org/ccpo>
+    a owl:Ontology ;
+    dcterms:title "Carbon Credit Provenance Ontology (CCPO)" ;
+    dcterms:description """A formal, machine-interpretable ontology for carbon credit
+        provenance. Extends the W3C PROV-O standard with domain-specific classes,
+        properties, and relationships for the full carbon credit lifecycle:
+        issuance, verification, transfer, retirement, and MRV evidence linkage.""" ;
+    dcterms:creator "Dr. Nada Alghanmi" ;
+    dcterms:contributor "Dr. Farookh Hussain" ;
+    dcterms:publisher "University of Technology Sydney (UTS)" ;
+    dcterms:date "2026" ;
+    dcterms:rights "CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/" ;
+    dcterms:source <https://w3id.org/ccpo> ;
+    owl:versionInfo "1.0" ;
+    owl:imports <http://www.w3.org/ns/prov-o#> .
+
+
+# ===========================================================================
+# SECTION 1: CORE ENTITY CLASSES
+# Aligned with PROV-O: prov:Entity
+# ===========================================================================
+
+cc:CarbonCredit
+    a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Carbon Credit" ;
+    rdfs:comment """The primary traceable entity. Represents a tradeable certificate of
+        verified emissions reduction, typically equivalent to one tonne of CO2e.
+        Includes attributes: CreditID, Quantity, VintageYear, Status, and Registry.""" ;
+    skos:example "VCS1225 credits for the Kenya Agricultural Carbon Project" .
+
+cc:Project
+    a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Carbon Credit Project" ;
+    rdfs:comment """Represents the offset project that generates carbon credits.
+        Includes: ProjectID, ProjectType, Location, Methodology, Developer.""" ;
+    skos:example "Kenya Agricultural Carbon Project — REDD+ avoided deforestation" .
+
+cc:MRVEvidence
+    a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "MRV Evidence" ;
+    rdfs:comment """Measurement, Reporting, and Verification artefacts that form the
+        evidential basis for credit issuance. Includes satellite imagery, sensor logs,
+        field reports, and verification statements.""" .
+
+cc:VerificationStatement
+    a owl:Class ;
+    rdfs:subClassOf cc:MRVEvidence ;
+    rdfs:label "Verification Statement" ;
+    rdfs:comment "Third-party verification statement confirming emissions reduction claims." .
+
+cc:MonitoringReport
+    a owl:Class ;
+    rdfs:subClassOf cc:MRVEvidence ;
+    rdfs:label "Monitoring Report" ;
+    rdfs:comment "Periodic monitoring report documenting project performance and MRV data." .
+
+cc:OnChainAnchor
+    a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "On-Chain Anchor" ;
+    rdfs:comment """A cryptographic hash commitment recorded on-chain that binds
+        off-chain MRV evidence to the provenance record. Enables tamper detection
+        without storing the full artefact on-chain.""" .
+
+cc:Registry
+    a owl:Class ;
+    rdfs:subClassOf prov:Agent ;
+    rdfs:label "Registry" ;
+    rdfs:comment """Platform or authority that issues and maintains carbon credits.
+        Examples: Verra (VCS), Gold Standard, UNFCCC CDM, Australian Clean Energy Regulator.""" .
+
+cc:Methodology
+    a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Methodology" ;
+    rdfs:comment """The standard or calculation methodology used to quantify emissions
+        reductions. Examples: CDM-AM0001, VCS-REDD+, ACM0002.""" .
+
+
+# ===========================================================================
+# SECTION 2: AGENT CLASSES
+# Aligned with PROV-O: prov:Agent
+# ===========================================================================
+
+cc:Issuer
+    a owl:Class ;
+    rdfs:subClassOf prov:Agent ;
+    rdfs:label "Issuer" ;
+    rdfs:comment "Registry or authority responsible for issuing carbon credits after verification." .
+
+cc:Verifier
+    a owl:Class ;
+    rdfs:subClassOf prov:Agent ;
+    rdfs:label "Verifier" ;
+    rdfs:comment "Accredited independent third-party auditor validating emissions reduction claims." .
+
+cc:ProjectDeveloper
+    a owl:Class ;
+    rdfs:subClassOf prov:Agent ;
+    rdfs:label "Project Developer" ;
+    rdfs:comment "Entity responsible for designing, implementing, and operating the offset project." .
+
+cc:Buyer
+    a owl:Class ;
+    rdfs:subClassOf prov:Agent ;
+    rdfs:label "Buyer" ;
+    rdfs:comment "Entity purchasing or retiring carbon credits for emissions offsetting purposes." .
+
+cc:Auditor
+    a owl:Class ;
+    rdfs:subClassOf prov:Agent ;
+    rdfs:label "Auditor" ;
+    rdfs:comment "Regulator or market participant responsible for verifying provenance integrity." .
+
+
+# ===========================================================================
+# SECTION 3: LIFECYCLE ACTIVITY CLASSES
+# Aligned with PROV-O: prov:Activity
+# Represents every state-changing event in the carbon credit lifecycle.
+# ===========================================================================
+
+cc:IssuanceActivity
+    a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Issuance Activity" ;
+    rdfs:comment """The activity through which a registry creates and assigns a carbon credit
+        following successful MRV verification. Must be linked to a VerificationStatement
+        and a valid Project. An OWL 2 reasoner can detect credits that lack a valid
+        IssuanceActivity parent — the basis of Integrity Check A.""" .
+
+cc:ValidationActivity
+    a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Validation Activity" ;
+    rdfs:comment """Independent third-party review of a project's emissions reduction claims,
+        conducted before or alongside issuance.""" .
+
+cc:TransferActivity
+    a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Transfer Activity" ;
+    rdfs:comment """Activity documenting the change of credit ownership between market
+        participants. CONSTRAINT: A TransferActivity MUST NOT occur after a
+        RetirementActivity on the same credit — enforced by OWL 2 reasoner.""" .
+
+cc:RetirementActivity
+    a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Retirement Activity" ;
+    rdfs:comment """Terminal activity that permanently extinguishes a carbon credit against
+        a specific emissions claim. Once retired, no further TransferActivity
+        is permitted (Integrity Check B).""" .
+
+cc:RevocationActivity
+    a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Revocation Activity" ;
+    rdfs:comment "Activity invalidating a previously issued credit due to fraud or MRV failure." .
+
+
+# ===========================================================================
+# SECTION 4: OBJECT PROPERTIES
+# Provenance relationships connecting lifecycle entities.
+# Based on PROV-O properties: wasGeneratedBy, wasAttributedTo,
+# wasDerivedFrom, wasAssociatedWith, used.
+# ===========================================================================
+
+# --- Credit–Project relationships ---
+
+cc:isCreditOf
+    a owl:ObjectProperty ;
+    rdfs:label "is credit of" ;
+    rdfs:comment "Links a CarbonCredit to its originating Project." ;
+    rdfs:domain cc:CarbonCredit ;
+    rdfs:range cc:Project ;
+    rdfs:subPropertyOf prov:wasDerivedFrom .
+
+cc:hasCredit
+    a owl:ObjectProperty ;
+    owl:inverseOf cc:isCreditOf ;
+    rdfs:label "has credit" ;
+    rdfs:comment "Links a Project to all CarbonCredits it has generated (forward direction)." ;
+    rdfs:domain cc:Project ;
+    rdfs:range cc:CarbonCredit .
+
+# --- Credit–Activity relationships ---
+
+cc:wasIssuedBy
+    a owl:ObjectProperty ;
+    rdfs:label "was issued by" ;
+    rdfs:comment "Links a CarbonCredit to the Registry that issued it." ;
+    rdfs:domain cc:CarbonCredit ;
+    rdfs:range cc:Registry ;
+    rdfs:subPropertyOf prov:wasAttributedTo .
+
+cc:wasValidatedBy
+    a owl:ObjectProperty ;
+    rdfs:label "was validated by" ;
+    rdfs:comment "Links a CarbonCredit or Project to the Verifier that validated it." ;
+    rdfs:domain [ owl:unionOf (cc:CarbonCredit cc:Project) ] ;
+    rdfs:range cc:Verifier ;
+    rdfs:subPropertyOf prov:wasAttributedTo .
+
+cc:wasTransferredTo
+    a owl:ObjectProperty ;
+    rdfs:label "was transferred to" ;
+    rdfs:comment "Records the receiving agent in a credit ownership transfer." ;
+    rdfs:domain cc:CarbonCredit ;
+    rdfs:range prov:Agent ;
+    rdfs:subPropertyOf prov:wasAttributedTo .
+
+cc:wasRetiredBy
+    a owl:ObjectProperty ;
+    rdfs:label "was retired by" ;
+    rdfs:comment "Links a retired CarbonCredit to the Buyer or agent that retired it." ;
+    rdfs:domain cc:CarbonCredit ;
+    rdfs:range cc:Buyer ;
+    rdfs:subPropertyOf prov:wasAttributedTo .
+
+cc:generatedCredit
+    a owl:ObjectProperty ;
+    rdfs:label "generated credit" ;
+    rdfs:comment "Links an IssuanceActivity to the CarbonCredit it generated." ;
+    rdfs:domain cc:IssuanceActivity ;
+    rdfs:range cc:CarbonCredit ;
+    rdfs:subPropertyOf prov:generated .
+
+# --- Evidence and anchoring relationships ---
+
+cc:hasEvidence
+    a owl:ObjectProperty ;
+    rdfs:label "has evidence" ;
+    rdfs:comment "Links an IssuanceActivity or Project to its supporting MRVEvidence artefacts." ;
+    rdfs:domain [ owl:unionOf (cc:IssuanceActivity cc:Project) ] ;
+    rdfs:range cc:MRVEvidence .
+
+cc:hasOnChainAnchor
+    a owl:ObjectProperty ;
+    rdfs:label "has on-chain anchor" ;
+    rdfs:comment """Links an MRVEvidence artefact to its OnChainAnchor (cryptographic hash
+        committed on-chain for tamper detection).""" ;
+    rdfs:domain cc:MRVEvidence ;
+    rdfs:range cc:OnChainAnchor .
+
+# --- Project–Methodology relationship ---
+
+cc:hasMethodology
+    a owl:ObjectProperty ;
+    rdfs:label "has methodology" ;
+    rdfs:comment "Specifies the calculation methodology used for a Project or CarbonCredit." ;
+    rdfs:domain [ owl:unionOf (cc:Project cc:CarbonCredit) ] ;
+    rdfs:range cc:Methodology .
+
+# --- Project status ---
+
+cc:hasProjectStatus
+    a owl:ObjectProperty ;
+    rdfs:label "has project status" ;
+    rdfs:comment "Reflects the current status of a project: Active, Suspended, Completed." ;
+    rdfs:domain cc:Project ;
+    rdfs:range cc:ProjectStatus .
+
+
+# ===========================================================================
+# SECTION 5: DATATYPE PROPERTIES
+# Attributes captured as literal values on credit and project individuals.
+# ===========================================================================
+
+cc:creditID
+    a owl:DatatypeProperty ;
+    rdfs:label "credit ID" ;
+    rdfs:comment "Unique identifier assigned to each carbon credit by its issuing registry." ;
+    rdfs:domain cc:CarbonCredit ;
+    rdfs:range xsd:string .
+
+cc:projectID
+    a owl:DatatypeProperty ;
+    rdfs:label "project ID" ;
+    rdfs:comment "Unique identifier for the offset project." ;
+    rdfs:domain cc:Project ;
+    rdfs:range xsd:string .
+
+cc:vintageYear
+    a owl:DatatypeProperty ;
+    rdfs:label "vintage year" ;
+    rdfs:comment "Year(s) during which the emissions reductions occurred." ;
+    rdfs:domain cc:CarbonCredit ;
+    rdfs:range xsd:integer .
+
+cc:quantity
+    a owl:DatatypeProperty ;
+    rdfs:label "quantity" ;
+    rdfs:comment "Amount of CO2e offset, typically 1 tonne per credit." ;
+    rdfs:domain cc:CarbonCredit ;
+    rdfs:range xsd:decimal .
+
+cc:creditStatus
+    a owl:DatatypeProperty ;
+    rdfs:label "credit status" ;
+    rdfs:comment "Current lifecycle state: issued | transferred | retired | revoked." ;
+    rdfs:domain cc:CarbonCredit ;
+    rdfs:range xsd:string .
+
+cc:projectLocation
+    a owl:DatatypeProperty ;
+    rdfs:label "project location" ;
+    rdfs:comment "Geographic coordinates or administrative region of the project." ;
+    rdfs:domain cc:Project ;
+    rdfs:range xsd:string .
+
+cc:projectType
+    a owl:DatatypeProperty ;
+    rdfs:label "project type" ;
+    rdfs:comment "Category of emissions reduction: REDD+, CDM, Soil Carbon, A/R, Renewable Energy, Methane Capture." ;
+    rdfs:domain cc:Project ;
+    rdfs:range xsd:string .
+
+cc:methodologyVersion
+    a owl:DatatypeProperty ;
+    rdfs:label "methodology version" ;
+    rdfs:comment "Version of the applied methodology protocol (e.g., VM0015 v1.3)." ;
+    rdfs:domain cc:Methodology ;
+    rdfs:range xsd:string .
+
+cc:corsiaEligible
+    a owl:DatatypeProperty ;
+    rdfs:label "CORSIA eligible" ;
+    rdfs:comment "Boolean flag indicating eligibility under ICAO CORSIA framework." ;
+    rdfs:domain cc:CarbonCredit ;
+    rdfs:range xsd:boolean .
+
+cc:contentHash
+    a owl:DatatypeProperty ;
+    rdfs:label "content hash" ;
+    rdfs:comment "SHA-256 cryptographic hash of the off-chain MRV evidence artefact." ;
+    rdfs:domain cc:OnChainAnchor ;
+    rdfs:range xsd:string .
+
+cc:transactionID
+    a owl:DatatypeProperty ;
+    rdfs:label "transaction ID" ;
+    rdfs:comment "Blockchain transaction ID for on-chain provenance events." ;
+    rdfs:domain prov:Activity ;
+    rdfs:range xsd:string .
+
+cc:timestamp
+    a owl:DatatypeProperty ;
+    rdfs:label "timestamp" ;
+    rdfs:comment "ISO 8601 date-time of a lifecycle event." ;
+    rdfs:domain prov:Activity ;
+    rdfs:range xsd:dateTime .
+
+cc:totalCreditsIssued
+    a owl:DatatypeProperty ;
+    rdfs:label "total credits issued" ;
+    rdfs:comment "Cumulative number of credits issued by the project." ;
+    rdfs:domain cc:Project ;
+    rdfs:range xsd:integer .
+
+cc:totalCreditsRetired
+    a owl:DatatypeProperty ;
+    rdfs:label "total credits retired" ;
+    rdfs:comment "Cumulative number of credits retired against emissions claims." ;
+    rdfs:domain cc:Project ;
+    rdfs:range xsd:integer .
+
+cc:totalCreditsRemaining
+    a owl:DatatypeProperty ;
+    rdfs:label "total credits remaining" ;
+    rdfs:comment "Number of credits currently active and available for transfer or retirement." ;
+    rdfs:domain cc:Project ;
+    rdfs:range xsd:integer .
+
+
+# ===========================================================================
+# SECTION 6: ENUMERATION — CREDIT STATUS
+# ===========================================================================
+
+cc:CreditStatusType
+    a owl:Class ;
+    owl:oneOf (cc:Issued cc:Transferred cc:Retired cc:Revoked cc:Cancelled) ;
+    rdfs:label "Credit Status Type" ;
+    rdfs:comment "Controlled vocabulary for valid carbon credit lifecycle states." .
+
+cc:Issued      a cc:CreditStatusType ; rdfs:label "Issued" .
+cc:Transferred a cc:CreditStatusType ; rdfs:label "Transferred" .
+cc:Retired     a cc:CreditStatusType ; rdfs:label "Retired" .
+cc:Revoked     a cc:CreditStatusType ; rdfs:label "Revoked" .
+cc:Cancelled   a cc:CreditStatusType ; rdfs:label "Cancelled" .
+
+cc:ProjectStatus
+    a owl:Class ;
+    owl:oneOf (cc:Active cc:Suspended cc:Completed) ;
+    rdfs:label "Project Status" ;
+    rdfs:comment "Controlled vocabulary for project lifecycle states." .
+
+cc:Active    a cc:ProjectStatus ; rdfs:label "Active" .
+cc:Suspended a cc:ProjectStatus ; rdfs:label "Suspended" .
+cc:Completed a cc:ProjectStatus ; rdfs:label "Completed" .
+
+
+# ===========================================================================
+# SECTION 7: OWL 2 INTEGRITY CONSTRAINTS
+# These enable OWL 2 reasoners (e.g., HermiT, Pellet) to automatically
+# detect provenance violations.
+# ===========================================================================
+
+# Constraint: Every CarbonCredit must be linked to at least one IssuanceActivity
+cc:CarbonCredit
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty prov:wasGeneratedBy ;
+        owl:someValuesFrom cc:IssuanceActivity
+    ] ;
+    rdfs:comment """OWL 2 restriction: any cc:CarbonCredit that lacks a
+        prov:wasGeneratedBy link to a cc:IssuanceActivity is flagged as an
+        integrity violation by the reasoner (Integrity Check A).""" .
+
+# Constraint: Every IssuanceActivity must have at least one MRVEvidence
+cc:IssuanceActivity
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty cc:hasEvidence ;
+        owl:someValuesFrom cc:MRVEvidence
+    ] .
+
+# Constraint: Every CarbonCredit must be linked to exactly one Project
+cc:CarbonCredit
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty cc:isCreditOf ;
+        owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+        owl:onClass cc:Project
+    ] .
