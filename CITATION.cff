@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+title: Carbon Credit Provenance Ontology (CCPO)
+message: If you use this ontology, please cite it as below.
+type: dataset
+abstract: >-
+  A domain ontology for carbon credit provenance, extending the W3C PROV-O
+  standard with the classes, properties and lifecycle constraints required to
+  represent issuance, transfer and retirement across carbon registries.
+keywords:
+  - carbon credits
+  - provenance
+  - ontology
+  - OWL 2
+  - PROV-O
+  - blockchain
+license: CC-BY-4.0
