@@ -1,178 +1,205 @@
 # ===========================================================================
-# CCPO — SPARQL Competency Questions
-# These queries validate that the ontology can answer the provenance
-# questions required by the carbon credit auditing domain.
-# Source: Chapter 5 — CCPO Evaluation (Dr. Nada Alghanmi, UTS 2026)
-# ===========================================================================
-# To run: load ccpo.ttl + ccpo_individuals_vcs1225.ttl into an OWL reasoner
-# (e.g. Apache Jena Fuseki, or Protégé SPARQL tab), then execute each query.
+# CCPO - SPARQL competency questions
+#
+# These queries operationalise the integrity requirements declared by the
+# OWL 2 axioms. OWL's open world assumption means a reasoner cannot treat a
+# missing provenance link as a violation; SPARQL evaluates a closed world
+# over the asserted graph, so absence is detectable here.
+#
+# Verified against ontology/ccpo.owl. Every class, property and namespace
+# below appears in that file.
+#
+# To run: load ontology/ccpo.owl in Protege and use the SPARQL Query tab,
+# or load ontology/ccpo.ttl into Apache Jena Fuseki.
 # ===========================================================================
 
-PREFIX cc:   <https://w3id.org/ccpo#>
+# Classes and properties are in the cc: namespace.
+# Individuals are in the ind: namespace - these differ, which matters when
+# writing queries by hand.
+PREFIX cc:   <http://example.org/cc#>
+PREFIX ind:  <http://www.semanticweb.org/owl/owlapi/turtle#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
-PREFIX ind:  <https://w3id.org/ccpo/individuals#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
 
 
 # ---------------------------------------------------------------------------
-# CQ1 — BACKWARD TRACE
-# "Given a carbon credit, trace its full provenance chain back to the
-#  originating project and its MRV evidence."
-# Demonstrates: backward tracing (Chapter 5, Section 5.6.2)
+# CQ1 - BACKWARD TRACE
+# From a credit, recover the originating project, the issuance activity, the
+# issuing registry and the supporting MRV evidence.
+# Note: cc:wasIssuedBy has domain cc:IssuanceActivity, so it attaches to the
+# issuance rather than to the credit.
 # ---------------------------------------------------------------------------
-SELECT ?credit ?project ?issuanceActivity ?registry ?evidence ?anchor
+SELECT ?credit ?creditID ?project ?projectName ?issuance ?registry ?evidence
 WHERE {
-    ?credit      a cc:CarbonCredit ;
-                 cc:isCreditOf        ?project ;
-                 cc:wasIssuedBy       ?registry ;
-                 prov:wasGeneratedBy  ?issuanceActivity .
-    ?issuanceActivity cc:hasEvidence  ?evidence .
-    OPTIONAL { ?evidence cc:hasOnChainAnchor ?anchor }
+    ?credit    a cc:CarbonCredit ;
+               cc:isCreditOf       ?project ;
+               prov:wasGeneratedBy ?issuance .
+    ?issuance  a cc:IssuanceActivity .
+    OPTIONAL { ?credit   cc:hasCreditID   ?creditID }
+    OPTIONAL { ?project  cc:hasProjectName ?projectName }
+    OPTIONAL { ?issuance cc:wasIssuedBy   ?registry }
+    OPTIONAL { ?issuance cc:hasEvidence   ?evidence }
 }
 
 
 # ---------------------------------------------------------------------------
-# CQ2 — FORWARD TRACE
-# "From a project, retrieve all credits generated, their issuance events,
-#  and their current status."
-# Demonstrates: forward tracing (Chapter 5, Section 5.6.3)
+# CQ2 - FORWARD TRACE
+# From a project, recover every credit generated, with vintage and volumes.
 # ---------------------------------------------------------------------------
-SELECT ?project ?credit ?creditID ?vintageYear ?status ?issuanceActivity
+SELECT ?project ?projectName ?credit ?creditID ?vintageYear ?issued ?retired ?remaining
 WHERE {
-    ?project    a cc:Project .
-    ?credit     a cc:CarbonCredit ;
-                cc:isCreditOf        ?project ;
-                cc:creditID          ?creditID ;
-                cc:vintageYear       ?vintageYear ;
-                cc:creditStatus      ?status ;
-                prov:wasGeneratedBy  ?issuanceActivity .
+    ?project a cc:Project .
+    ?credit  a cc:CarbonCredit ;
+             cc:isCreditOf ?project .
+    OPTIONAL { ?project cc:hasProjectName        ?projectName }
+    OPTIONAL { ?credit  cc:hasCreditID           ?creditID }
+    OPTIONAL { ?credit  cc:vintageYear           ?vintageYear }
+    OPTIONAL { ?credit  cc:totalCreditsIssued    ?issued }
+    OPTIONAL { ?credit  cc:totalCreditsRetired   ?retired }
+    OPTIONAL { ?credit  cc:totalCreditsRemaining ?remaining }
 }
 ORDER BY ?project ?vintageYear
 
 
 # ---------------------------------------------------------------------------
-# CQ3 — INTEGRITY CHECK A
-# "Are there any carbon credits that lack a valid issuance activity?"
-# These are provenance violations — fraudulent or incomplete credits.
-# Demonstrates: Integrity Check A (Chapter 5, Section 5.6.4)
+# CQ3 - INTEGRITY CHECK A: credits with no issuance
+# The OWL axiom CarbonCredit subClassOf wasGeneratedBy some IssuanceActivity
+# declares this requirement but, under the open world assumption, a reasoner
+# infers a missing issuance rather than reporting one. This query enforces it.
+# Expected result: the VCS1176 credit, deliberately instantiated unissued.
 # ---------------------------------------------------------------------------
-SELECT ?credit ?creditID
+SELECT ?credit ?creditID ?label
 WHERE {
     ?credit a cc:CarbonCredit .
-    OPTIONAL { ?credit prov:wasGeneratedBy ?issuance .
-               ?issuance a cc:IssuanceActivity }
-    FILTER (!BOUND(?issuance))
-    OPTIONAL { ?credit cc:creditID ?creditID }
+    OPTIONAL { ?credit cc:hasCreditID ?creditID }
+    OPTIONAL { ?credit rdfs:label     ?label }
+    FILTER NOT EXISTS {
+        ?credit prov:wasGeneratedBy ?issuance .
+        ?issuance a cc:IssuanceActivity .
+    }
 }
 
 
 # ---------------------------------------------------------------------------
-# CQ4 — INTEGRITY CHECK B
-# "Detect transfer-after-retirement violations:
-#  credits that have both a TransferActivity AND a prior RetirementActivity."
-# Demonstrates: Integrity Check B (Chapter 5, Section 5.6.4)
+# CQ4 - INTEGRITY CHECK B: transfer after retirement
+# Temporal ordering is not expressible in OWL 2 DL, so this constraint is
+# declared in the ontology and enforced here and at the verification layer.
+# Expected result: the VCS1225 credit, retired 2022-01-10 and then
+# transferred 2022-03-01.
 # ---------------------------------------------------------------------------
-SELECT ?credit ?retirementTime ?transferTime
+SELECT ?credit ?retirement ?retirementTime ?transfer ?transferTime
 WHERE {
-    ?credit     a cc:CarbonCredit .
     ?retirement a cc:RetirementActivity ;
-                prov:used         ?credit ;
-                cc:timestamp      ?retirementTime .
+                prov:used        ?credit ;
+                cc:eventTimestamp ?retirementTime .
     ?transfer   a cc:TransferActivity ;
-                prov:used         ?credit ;
-                cc:timestamp      ?transferTime .
+                prov:used        ?credit ;
+                cc:eventTimestamp ?transferTime .
     FILTER (?transferTime > ?retirementTime)
 }
 
 
 # ---------------------------------------------------------------------------
-# CQ5 — DOUBLE COUNTING CHECK
-# "Are there any credits linked to more than one issuance activity?"
-# (Each credit must have exactly one valid IssuanceActivity parent)
+# CQ5 - DOUBLE COUNTING: one credit, two projects
+# This is the query behind CQ8 in the thesis. It complements the cardinality
+# axiom cc:isCreditOf exactly 1 cc:Project, which a reasoner does detect,
+# but only where the projects are asserted owl:differentFrom one another.
+# The query needs no such assertion.
 # ---------------------------------------------------------------------------
-SELECT ?credit (COUNT(?issuance) AS ?issuanceCount)
+SELECT ?credit ?creditID (COUNT(DISTINCT ?project) AS ?projectCount)
 WHERE {
-    ?credit   a cc:CarbonCredit ;
-              prov:wasGeneratedBy ?issuance .
-    ?issuance a cc:IssuanceActivity .
+    ?credit a cc:CarbonCredit ;
+            cc:isCreditOf ?project .
+    OPTIONAL { ?credit cc:hasCreditID ?creditID }
 }
-GROUP BY ?credit
-HAVING (COUNT(?issuance) > 1)
+GROUP BY ?credit ?creditID
+HAVING (COUNT(DISTINCT ?project) > 1)
 
 
 # ---------------------------------------------------------------------------
-# CQ6 — MRV EVIDENCE COMPLETENESS
-# "Which issuance activities are missing verification statements?"
+# CQ6 - DOUBLE ISSUANCE: one credit, two issuance activities
 # ---------------------------------------------------------------------------
-SELECT ?issuance
+SELECT ?credit ?creditID (COUNT(DISTINCT ?issuance) AS ?issuanceCount)
+WHERE {
+    ?credit a cc:CarbonCredit ;
+            prov:wasGeneratedBy ?issuance .
+    ?issuance a cc:IssuanceActivity .
+    OPTIONAL { ?credit cc:hasCreditID ?creditID }
+}
+GROUP BY ?credit ?creditID
+HAVING (COUNT(DISTINCT ?issuance) > 1)
+
+
+# ---------------------------------------------------------------------------
+# CQ7 - MRV EVIDENCE COMPLETENESS
+# Which issuance activities carry no MRV evidence? This enforces the axiom
+# IssuanceActivity subClassOf hasEvidence some MRVEvidence.
+# Expected result: the attempted VCS1176 issuance.
+# ---------------------------------------------------------------------------
+SELECT ?issuance ?label
 WHERE {
     ?issuance a cc:IssuanceActivity .
+    OPTIONAL { ?issuance rdfs:label ?label }
     FILTER NOT EXISTS {
         ?issuance cc:hasEvidence ?evidence .
-        ?evidence a cc:VerificationStatement .
+        ?evidence a cc:MRVEvidence .
     }
 }
 
 
 # ---------------------------------------------------------------------------
-# CQ7 — FULL LIFECYCLE SUMMARY
-# "For each project, show the full lifecycle count:
-#  credits issued, transferred, retired."
+# CQ8 - LIFECYCLE SUMMARY BY PROJECT
 # ---------------------------------------------------------------------------
-SELECT ?project ?projectID
+SELECT ?projectID ?projectName ?status
        (SUM(?issued)    AS ?totalIssued)
        (SUM(?retired)   AS ?totalRetired)
        (SUM(?remaining) AS ?totalRemaining)
 WHERE {
     ?project a cc:Project .
-    OPTIONAL { ?project cc:projectID            ?projectID }
-    OPTIONAL { ?project cc:totalCreditsIssued   ?issued }
-    OPTIONAL { ?project cc:totalCreditsRetired  ?retired }
-    OPTIONAL { ?project cc:totalCreditsRemaining ?remaining }
+    OPTIONAL { ?project cc:hasProjectID   ?projectID }
+    OPTIONAL { ?project cc:hasProjectName ?projectName }
+    OPTIONAL { ?project cc:hasProjectStatus ?statusInd .
+               ?statusInd rdfs:label ?status }
+    OPTIONAL { ?credit cc:isCreditOf ?project ;
+                       cc:totalCreditsIssued    ?issued ;
+                       cc:totalCreditsRetired   ?retired ;
+                       cc:totalCreditsRemaining ?remaining }
 }
-GROUP BY ?project ?projectID
+GROUP BY ?projectID ?projectName ?status
 
 
 # ---------------------------------------------------------------------------
-# CQ8 — CROSS-REGISTRY VERIFICATION
-# "List all credits with their issuing registry and verifier."
+# CQ9 - VERIFIER AND REGISTRY ATTRIBUTION
+# Which agent verified the project, and which registry issued the credits?
+# Note: cc:hasVerifier attaches to the project; cc:wasVerifiedBy and
+# cc:wasIssuedBy attach to the issuance activity.
 # ---------------------------------------------------------------------------
-SELECT ?credit ?creditID ?registry ?verifier
+SELECT ?creditID ?projectName ?verifier ?validator ?registry
 WHERE {
     ?credit   a cc:CarbonCredit ;
-              cc:creditID     ?creditID ;
-              cc:wasIssuedBy  ?registry ;
-              cc:wasValidatedBy ?verifier .
+              cc:isCreditOf ?project .
+    OPTIONAL { ?credit   cc:hasCreditID    ?creditID }
+    OPTIONAL { ?project  cc:hasProjectName ?projectName }
+    OPTIONAL { ?project  cc:hasVerifier    ?verifier }
+    OPTIONAL { ?credit   prov:wasGeneratedBy ?issuance .
+               OPTIONAL { ?issuance cc:wasVerifiedBy ?validator }
+               OPTIONAL { ?issuance cc:wasIssuedBy   ?registry } }
 }
 
 
 # ---------------------------------------------------------------------------
-# CQ9 — CREDITS BY METHODOLOGY TYPE
-# "Which credits are associated with REDD+ projects?"
+# CQ10 - CREDITS BY PROJECT SCOPE OR METHODOLOGY
+# Filters projects by scope. Substitute the string as required, for example
+# "forest" or "agriculture".
 # ---------------------------------------------------------------------------
-SELECT ?credit ?creditID ?project ?methodology
+SELECT ?creditID ?projectName ?scope ?methodologyCode
 WHERE {
-    ?credit    a cc:CarbonCredit ;
-               cc:creditID     ?creditID ;
-               cc:isCreditOf   ?project .
-    ?project   cc:projectType  ?methodology .
-    FILTER (CONTAINS(LCASE(?methodology), "redd"))
-}
-
-
-# ---------------------------------------------------------------------------
-# CQ10 — ON-CHAIN ANCHOR VERIFICATION
-# "List all MRV evidence artefacts with their cryptographic anchors."
-# Supports audit trail verification.
-# ---------------------------------------------------------------------------
-SELECT ?issuance ?evidence ?evidenceType ?anchor ?hash
-WHERE {
-    ?issuance   a cc:IssuanceActivity ;
-                cc:hasEvidence ?evidence .
-    ?evidence   a ?evidenceType .
-    OPTIONAL {
-        ?evidence cc:hasOnChainAnchor ?anchor .
-        ?anchor   cc:contentHash      ?hash .
-    }
+    ?credit  a cc:CarbonCredit ;
+             cc:isCreditOf ?project .
+    ?project cc:hasScope ?scope .
+    OPTIONAL { ?credit  cc:hasCreditID        ?creditID }
+    OPTIONAL { ?project cc:hasProjectName     ?projectName }
+    OPTIONAL { ?project cc:hasMethodologyCode ?methodologyCode }
+    FILTER (CONTAINS(LCASE(STR(?scope)), "agriculture"))
 }
