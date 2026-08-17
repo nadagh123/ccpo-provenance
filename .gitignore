@@ -1,0 +1,20 @@
+# Protégé
+*.owl.bak
+*~
+.protege/
+catalog-v001.xml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Operating system
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
